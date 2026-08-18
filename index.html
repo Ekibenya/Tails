@@ -412,6 +412,16 @@ html.lux::after{content:'';position:fixed;inset:0;z-index:2147483647;pointer-eve
 #game .gNarr p{margin-bottom:1.5em}
 #game .gNarr>*{max-width:750px;margin-left:auto;margin-right:auto}
 #game .gNarr .q{color:var(--gold-hi)}
+/* 心声有两层，从前一层都没有自己的排法。
+   （）是压着嗓子那一层：与地の文同色同号，全篇最该被读到的一层排得最不起眼。
+   【】是喊出来那一层：卡的文体规矩里写死「每场至少三处爆发绝叫」，
+   却因为段首是方括号而一律套上 .sys——12px、字距 .32em、#6b6b66，
+   在 #060606 的底上对比度不到 3:1，等于把最响的一句话缩成页边的机器小字。
+   两条各自还回去：小声的比地の文亮一档，绝叫再亮一档并且明显更大。
+   金色留给对白，心声不去抢那一档，靠亮度和字号立住。 */
+#game .gNarr p:not(.sys) .ih{color:#efece6;font-size:1.06em;letter-spacing:.05em}
+#game .gNarr .cry{color:#f4efe4;font-size:1.18em;font-weight:600;letter-spacing:.09em;
+      line-height:1.7;text-shadow:0 0 20px rgba(236,200,120,.16)}
 #game .gNarr .sys{font-size:12px;letter-spacing:.32em;color:var(--mut)}
 #game .gNarr .me{color:#9fb4c8}
 #game .gEot{text-align:center;font-size:10px;letter-spacing:.4em;color:#4a4a44;margin:28px 0 8px}
@@ -2534,10 +2544,19 @@ var _clFrame=0;
    N＝2 时两张卡正好背对背，玩家只看得见一张，还以为这卡只有一个开局。
    封到 44°，开局与自定义就同框了。半径也得跟着这个角算——见 size()。 */
 function ringStep(){return Math.min(360/N,44);}
+/* 卡少的时候步角被 44° 封了顶，一圈根本转不满 360°——那时候这排卡是一条「直条」，
+   不是一个「环」。可位置一直按环算：pos 用 mod(pos,N) 回绕，摆位又按
+   d>N/2 折到另一边。N＝2 时 N/2 正好是 1，pos 在 1 附近来回抖一丁点，
+   自定义那张卡的 d 就在 -1 与 +1 之间反复翻面——看上去就是它突然蹦到右边又蹦回左边。
+   闭不成环就不回绕：pos 夹在 [0,N-1]，d 就是 i-pos，谁也不会跳。 */
+function ringWraps(){return N*ringStep()>=359.5;}
+function ringPos(p){return ringWraps()?mod(p,N):Math.max(0,Math.min(N-1,p));}
+/* 当前停在第几格。回绕与不回绕两种情形共用一个入口。 */
+function ringSel(){return ringWraps()?mod(Math.round(pos),N):Math.max(0,Math.min(N-1,Math.round(pos)));}
 function cardLayout(){
   /* 步角封顶 44°：按 360/N 摊开，N＝2 时两张卡正好背对背，玩家只看得见一张，
      还以为这卡只有一个开局。封了顶，开局与自定义就同框了。 */
-  var posm=mod(pos,N),step=ringStep();
+  var posm=ringPos(pos),step=ringStep(),wrap=ringWraps();
   _clFrame++;
   /* 先把要量的量完，再统一写样式。读 clientWidth 会强制同步重排，
      而这个循环原本是「写—读—写—读」交替 17 遍，等于一帧里逼着浏览器
@@ -2558,7 +2577,7 @@ function cardLayout(){
   }
   for(var i=0;i<N;i++){
     var d=i-posm;
-    if(d>N/2)d-=N;if(d<-N/2)d+=N;
+    if(wrap){if(d>N/2)d-=N;if(d<-N/2)d+=N;}
     var C=cards[i];
     var a=-d*step,rad=a*Math.PI/180,c=Math.cos(rad);
     var hid=(c<=.12);
@@ -2648,18 +2667,18 @@ function railDraw(){
   rg.textAlign='center';
   for(var i=0;i<N;i++){
     var x2=m+span*i/(N-1);
-    var cur=i===mod(Math.round(pos),N);
+    var cur=i===ringSel();
     rg.fillStyle=cur?'rgba(236,200,120,.95)':'rgba(107,107,102,.9)';
     rg.fillText(i===0?'✦':pad(i-1),x2,y+16*DPR);
   }
-  var fp=mod(pos,N);var nx=m+span*Math.min(fp/(N-1),1);
+  var fp=ringPos(pos);var nx=m+span*Math.min(Math.max(fp,0)/(N-1),1);
   rg.beginPath();rg.arc(nx,y,11*DPR,0,Math.PI*2);
   rg.fillStyle='rgba(6,6,6,.9)';rg.fill();
   rg.strokeStyle='rgba(236,236,232,.9)';rg.stroke();
   rg.beginPath();rg.arc(nx,y,14.5*DPR,0,Math.PI*2);
   rg.strokeStyle='rgba(201,155,63,.55)';rg.stroke();
   rg.fillStyle='#ecece8';
-  var selR=mod(Math.round(pos),N);
+  var selR=ringSel();
   rg.fillText(selR===0?'✦':pad(selR-1),nx,y+3.5*DPR);
 }
 function railGeom(){var W=rc.width/DPR;
@@ -2725,7 +2744,7 @@ function onMove(e){
   if(!drag||e.pointerId!==drag.id)return;
   var dx=e.clientX-drag.x;
   if(Math.abs(dx)>3)drag.moved=true;
-  pos=drag.p-dx/drag.u;              /* drag left → ring turns to the next panel */
+  pos=ringPos(drag.p-dx/drag.u);     /* drag left → ring turns to the next panel */
   var now=performance.now(),dt=now-drag.lt;
   if(dt>0){drag.v=(e.clientX-drag.lx)/dt;drag.lx=e.clientX;drag.lt=now;}
 }
@@ -2738,7 +2757,7 @@ function onUp(e){
          甩不飞也甩不丢，想停哪个开局就停哪个。 */
       var i=Math.round(pos);
       if(Math.abs(d.v)>.45)i=(d.v<0?Math.floor(pos)+1:Math.ceil(pos)-1);
-      vel=0;goTo(mod(i,N));
+      vel=0;goTo(ringWraps()?mod(i,N):i);
     }else vel=-d.v*7/stepPix();
     return;
   }
@@ -2752,12 +2771,13 @@ function onUp(e){
     var card=d.t0&&d.t0.closest&&d.t0.closest('.card');
     if(card){
       var ci=+card.dataset.i;
-      if(ci===mod(Math.round(pos),N)){if(window.SX)SX('click');engage();}
+      if(ci===ringSel()){if(window.SX)SX('click');engage();}
       else{if(window.SX)SX('pick');window.__ringPicked=1;goTo(ci);}
-    }else if(snapT===null)snapT=Math.round(pos);
+    }else if(snapT===null)snapT=ringSel();
   }
 }
 function goTo(i){
+  if(!ringWraps()){snapT=Math.max(0,Math.min(N-1,i));vel=0;return;}
   var cur=mod(pos,N),d=i-cur;
   if(d>N/2)d-=N;if(d<-N/2)d+=N;
   snapT=pos+d;vel=0;
@@ -2767,7 +2787,7 @@ addEventListener('pointermove',onMove);
 addEventListener('pointerup',onUp);
 /* 手势被系统抢走（返回手势、下拉刷新、来电浮层…）时会收到 cancel。
    只把 drag 清掉会让转盘停死在两张牌中间，所以顺手归位到最近的一格。 */
-function ringAbort(){drag=null;vel=0;goTo(mod(Math.round(pos),N));}
+function ringAbort(){drag=null;vel=0;goTo(ringSel());}
 addEventListener('pointercancel',function(e){
   if(drag&&(!e||e.pointerId===drag.id))ringAbort();
   ERA.drag=false;if(ERA.pts)for(var pk in ERA.pts)delete ERA.pts[pk];
@@ -2777,7 +2797,7 @@ var wAcc=0;
 addEventListener('wheel',function(e){
   if(INTRO.on||(MENU.on&&!MENU.exiting)||GAME.on)return;
   wAcc+=e.deltaY;
-  if(Math.abs(wAcc)>60){goTo(mod(Math.round(pos)+(wAcc>0?1:-1),N));wAcc=0;}
+  if(Math.abs(wAcc)>60){goTo(ringSel()+(wAcc>0?1:-1));wAcc=0;}
 },{passive:true});
 addEventListener('keydown',function(e){
   if(INTRO.on){
@@ -2824,8 +2844,8 @@ addEventListener('keydown',function(e){
     return;
   }
   var _k=(e.key||'').toLowerCase();   /* A／D 与左右方向键同义（大小写皆可） */
-  if(e.key==='ArrowRight'||_k==='d')goTo(mod(Math.round(pos)+1,N));
-  else if(e.key==='ArrowLeft'||_k==='a')goTo(mod(Math.round(pos)-1,N));
+  if(e.key==='ArrowRight'||_k==='d')goTo(ringSel()+1);
+  else if(e.key==='ArrowLeft'||_k==='a')goTo(ringSel()-1);
   else if(e.key==='Enter')engage();
   else if(e.key==='Escape')disengage();
 });
@@ -2865,7 +2885,7 @@ function rebuildRing(line){
 }
 function engage(){
   if(linked)return;
-  var i=mod(Math.round(pos),N),o=OPS[i];
+  var i=ringSel(),o=OPS[i];
   if(o.id==='custom'){                 /* 自定义开局：选地 → 人物 */
     /* 不问年代。这张卡的故事只发生在王历八四七年这一年里，
        让玩家填年份既没有意义，填错了还会把整局的时地写歪。 */
@@ -4571,7 +4591,8 @@ function gameEnter(lineOverride){
         /* 粘性滚动：玩家贴着底才跟进；往上翻了就别打扰人家看前文，翻回来自动恢复跟随 */
         var n2=$('#gNarr');var _stk=n2.scrollHeight-n2.scrollTop-n2.clientHeight<90;
         el.innerHTML=el._pend.split(/\n{2,}/).map(function(par){
-          return /^【/.test(par.trim())?('<p class="sys">'+fmtBody(par)+'</p>'):('<p>'+fmtBody(par)+'</p>');
+          var _c=paraCls(par);
+          return _c?('<p class="'+_c+'">'+fmtBody(par)+'</p>'):('<p>'+fmtBody(par)+'</p>');
         }).join('');
         if(_stk)n2.scrollTop=n2.scrollHeight;
       });
@@ -5569,7 +5590,18 @@ function narrAdd(cls,html,tIdx){
 function fmtBody(par){
   return esc2(par).replace(/\n/g,'<br>')
     .replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>')
-    .replace(/「([^」]*)」/g,'「<span class="q">$1</span>」');
+    .replace(/「([^」]*)」/g,'「<span class="q">$1</span>」')
+    .replace(/（([^（）]*)）/g,'<span class="ih">（$1）</span>');
+}
+/* 段首的方括号有两种，从前一律按系统牌子排。
+   一种是开局那一行抬头：【开局零·…… ▍你扮演的是：……】——那才是牌子。
+   另一种是卡的文体规矩里写死的那一层：「（）小声吐槽、【】爆发绝叫」，
+   每一场至少三处，回回都有。抬头两个记号（▍与「你扮演的是」）同时出现，
+   绝叫一个都不会有，据此分开。 */
+function paraCls(par){
+  var t=String(par||'').trim();
+  if(t.charAt(0)!=='【')return null;
+  return (/▍/.test(t)&&/你扮演的是/.test(t))?'sys':'cry';
 }
 var TYPE_GEN=0;   /* 代际令牌：换开局/读档/重演时旧打字链立刻失效 */
 function typeParas(paras,tIdx,done,instant){
@@ -5578,9 +5610,10 @@ function typeParas(paras,tIdx,done,instant){
   var par=paras.shift(),html=fmtBody(par);
   /* instant 必须一路传下去：漏传的话只有第一段是即时的，从第二段起又回落成
      13ms/字重打一遍——流式明明已经出完字了，玩家还要再等十几秒看它重放。 */
-  if(/^【/.test(par.trim())){narrAdd('sys',html,tIdx);typeParas(paras,tIdx,done,instant);return;}
-  if(!speed||REDUCED){narrAdd(null,html,tIdx);typeParas(paras,tIdx,done,instant);return;}
-  var p=narrAdd(null,'',tIdx),tmp=document.createElement('div');tmp.innerHTML=html;
+  var _pc=paraCls(par);
+  if(_pc==='sys'){narrAdd('sys',html,tIdx);typeParas(paras,tIdx,done,instant);return;}
+  if(!speed||REDUCED){narrAdd(_pc,html,tIdx);typeParas(paras,tIdx,done,instant);return;}
+  var p=narrAdd(_pc,'',tIdx),tmp=document.createElement('div');tmp.innerHTML=html;
   var txt=tmp.textContent,i=0,sc=0,nr=$('#gNarr');
   var _atEnd=(nr.scrollHeight-nr.scrollTop-nr.clientHeight<120);   /* 只在开头量这一次 */
   (function tick(){
@@ -6802,7 +6835,8 @@ function askOracleSend(msgs){
         if(!el.parentNode)return;                    /* 已收尾移除：这一帧直接丢弃 */
         var nr2=$('#gNarr');var _stk=nr2.scrollHeight-nr2.scrollTop-nr2.clientHeight<90;
         el.innerHTML=el._pend.split(/\n{2,}/).map(function(par){
-          return /^【/.test(par.trim())?('<p class="sys">'+fmtBody(par)+'</p>'):('<p>'+fmtBody(par)+'</p>');
+          var _c=paraCls(par);
+          return _c?('<p class="'+_c+'">'+fmtBody(par)+'</p>'):('<p>'+fmtBody(par)+'</p>');
         }).join('');
         if(_stk)nr2.scrollTop=nr2.scrollHeight;
       });
@@ -10935,13 +10969,12 @@ function loadOpening(side,op,locOverride){
   }catch(_){}
   var body=stripMvu(op.text),panel=parseMvu(op.text);
   var nr=$('#gNarr');nr.innerHTML='';
+  /* 开局这一幕从前在这里自带一份排版，与 fmtBody／paraCls 各走各的——
+     心声的两层排法只改了那一份，开局照旧是老样子。统一走同一对函数。 */
   body.split(/\n{2,}/).forEach(function(par){
-    var p=document.createElement('p');
-    if(/^【/.test(par.trim()))p.className='sys';
-    var htm=esc2(par).replace(/\n/g,'<br>')
-      .replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>')
-      .replace(/「([^」]*)」/g,'「<span class="q">$1</span>」');
-    p.innerHTML=htm;
+    var p=document.createElement('p'),c=paraCls(par);
+    if(c)p.className=c;
+    p.innerHTML=fmtBody(par);
     nr.appendChild(p);
   });
   var eot=document.createElement('div');eot.className='gEot';eot.textContent='·  ·  EOT  ·  ·';
@@ -11501,14 +11534,18 @@ function loop(t){
   if(!isFinite(vel))vel=0;
   if(snapT!==null&&!isFinite(snapT))snapT=Math.round(pos);
   if(!drag){
-    if(Math.abs(vel)>.002){pos+=vel;vel*=.93;}
+    if(Math.abs(vel)>.002){
+      pos+=vel;vel*=.93;
+      /* 不回绕的时候甩过头就到边为止，别拖出一段没有卡的空白 */
+      if(!ringWraps()){var pc=ringPos(pos);if(pc!==pos){pos=pc;vel=0;}}
+    }
     else{
-      if(snapT===null)snapT=Math.round(pos);
+      if(snapT===null)snapT=ringSel();
       pos=lerp(pos,snapT,.14);
       if(Math.abs(pos-snapT)<.001)pos=snapT;
     }
   }
-  sel=mod(Math.round(pos),N);
+  sel=ringSel();
   /* re-assemble + refresh mission label only when the ring has settled, not on drive-bys */
   if(!drag&&Math.abs(pos-Math.round(pos))<.02&&sel!==lastSel){
     var _prevSel=lastSel;
