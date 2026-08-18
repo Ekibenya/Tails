@@ -8728,21 +8728,35 @@ try{(JSON.parse(localStorage.getItem('rome_lore_custom')||'[]')||[]).forEach(fun
 });}catch(_){}
 var ACTIVE='tail';                       /* which card drives the running game session */
 var BOOK={side:'tail',cat:0,ent:0};
+/* 底层条目：铁则、文风锚、指南、玩法支援这些是写给模型看的工程件，不是读物。
+   它们照旧进提示词（loreFor 不受影响），只是不在世界书弹窗里列出来——
+   玩家翻开「书」是想看这个世界，不是想看我们怎么调教模型的。 */
+var BOOK_HIDDEN={'铁则':1,'指南':1,'玩法支援':1,'文风':1,'文风锚':1};
+function bookHide(e){
+  if(!e)return true;
+  if(e.custom||e.cat==='自写')return false;          /* 玩家自己写的照旧显示 */
+  if(BOOK_HIDDEN[e.cat||''])return true;
+  var t=String(e.title||'');
+  return /^【(铁则|文风锚|指南|支援)/.test(t);
+}
 function bookCats(side){
   var lb=CARDS[side].lorebook||[],order=[],map={};
-  for(var i=0;i<lb.length;i++){var c=lb[i].cat||'其他';
+  for(var i=0;i<lb.length;i++){
+    if(bookHide(lb[i]))continue;
+    var c=lb[i].cat||'其他';
     if(!map[c]){map[c]=[];order.push(c);}map[c].push(i);}
   return{order:order,map:map};
 }
 function bookRender(){
   var side=BOOK.side,lb=CARDS[side].lorebook||[],bc=bookCats(side);
+  var _visible=bc.order.length>0;
   var tabs=document.querySelectorAll('#dlgBook .cxTab');
   for(var t=0;t<tabs.length;t++)tabs[t].classList.toggle('on',tabs[t].getAttribute('data-side')===side);
   var catsEl=$('#cxCats'),entsEl=$('#cxEnts');
   catsEl.innerHTML='';entsEl.innerHTML='';
-  if(!lb.length){
-    $('#cxTtl').textContent='陆之卷';
-    $('#cxTxt').textContent='—— 本卷writing中，正在灌注。 ——';
+  if(!_visible){
+    $('#cxTtl').textContent='世界书';
+    $('#cxTxt').textContent='—— 本卷编纂中。 ——';
     return;
   }
   if(BOOK.cat>=bc.order.length)BOOK.cat=0;
