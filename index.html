@@ -1662,7 +1662,7 @@ html.lux #pnTx #zjScene3D>canvas,html.lux #pnTx #mdScene3D>canvas,html.lux #pnTx
         <span class="gm" data-tag="LIBERVM" data-ph="想怎么写就怎么写 · 不加任何模式前缀"><i class="ms">✧</i><b>随便写</b></span>
         <span class="gm" data-tag="INSIDIAE" data-ph="私下说话 · 只有你和同伙看得见"><i class="ms">◈</i><b>聊天模式</b></span>
         <span class="gm" data-tag="EPISTVLA" data-ph="修书一封 · 收件人 @名字"><i class="ms">✉</i><b>写信</b></span>
-        <span class="gm" data-tag="EDICTVM" data-ph="下令营造、征发之类 · 折损恩宠"><i class="ms">▣</i><b>建造</b></span>
+        <span class="gm" data-tag="EDICTVM" data-ph="吩咐人去办一件事 · 说了不一定算数"><i class="ms">▣</i><b>吩咐</b></span>
         <!-- 四选项不是输入模式，是个开关：隔一条线单列在单子最底下，开着打勾。
              点它不收单子——开关要能看见自己刚才被打上/取消了勾。 -->
         <i class="gmSep"></i>
@@ -1698,8 +1698,8 @@ html.lux #pnTx #zjScene3D>canvas,html.lux #pnTx #mdScene3D>canvas,html.lux #pnTx
       </div>
     </div>
     <div class="mSec"><div class="mHead"><i>◆</i>&nbsp;INDICIA&nbsp;·&nbsp;线索</div>
-      <div class="mLead"><i>L1</i>&nbsp;&nbsp;掖庭录名按门第排行次，名录三日后封</div>
-      <div class="mLead"><i>L2</i>&nbsp;&nbsp;西院墙根新添一道湿脚印，四个圆坑，来历不明</div>
+      <div class="mLead"><i>L1</i>&nbsp;&nbsp;所里的名册按号排，登记日过了三天就封</div>
+      <div class="mLead"><i>L2</i>&nbsp;&nbsp;井后头的墙根新添一道湿脚印，分蹄的，来历不明</div>
     </div>
     <div class="mSec"><div class="mHead"><i>◆</i>&nbsp;OP&nbsp;STATVS</div>
       <div class="mOps">
@@ -1708,7 +1708,7 @@ html.lux #pnTx #zjScene3D>canvas,html.lux #pnTx #mdScene3D>canvas,html.lux #pnTx
     </div>
     <div class="mSec">
       <div class="mRow"><span>EXPOSVRA&nbsp;·&nbsp;曝光</span><b>10</b></div><div class="mBar red"><i style="width:10%"></i></div>
-      <div class="mRow"><span>GRATIA&nbsp;·&nbsp;恩宠</span><b>45</b></div><div class="mBar"><i style="width:45%"></i></div>
+      <div class="mRow"><span>STATVS&nbsp;·&nbsp;籍位</span><b>0</b></div><div class="mBar"><i style="width:2%"></i></div>
     </div>
   </aside>
 
@@ -4492,14 +4492,22 @@ function condereOp(line,y,nm,cn){
      情报台就只剩一条 MENS 行，看着像坏了。 */
   /* 底稿的主角段按本卡的 panelSpec 铺：写死过一次（戎装/神躯/神格/血兴），
      换一张卡就成了另一张卡的栏名，情报台一栏都对不上。 */
-  var _dv={'形貌':'风尘未洗，无人认得这张脸','戎装':'旅途风尘未洗','衣冠':'寻常布衣',
-           '持物':'随身几件旧物','体况':'无伤','神躯':'无伤，一切如常','御体':'一切如常',
+  /* 缺省值也按本卡的栏名写。上一版这张表里全是另一张卡的栏（戎装／神躯／御体），
+     这张卡的栏是 穿的／带的／身子／人眼／主人，一条都对不上，于是全落到 '50'。 */
+  var _dv={'穿的':'身上那件是别人给的，不合身','带的':'随身几件旧物',
+           '身子':'没伤，只是累','人眼':'没有人多看一眼','主人':'无',
+           '形貌':'风尘未洗，无人认得这张脸','持物':'随身几件旧物','体况':'无伤',
            '观瞻':'无人认得这张脸'};
+  /* 保留栏的栏名从 panelSpec 取，不写死成上一张卡的「史笔」。 */
+  var _rsv='';
+  try{var _rr=((CARDS[ACTIVE]&&CARDS[ACTIVE].panelSpec)||{}).reserved;
+      if(_rr&&_rr.length)_rsv=_rr[0];}catch(_){}
   var mv='<mvu_panel>\n<sec_char>\n'
-    +panelChKeys().filter(function(k){return k!=='心声'&&k!=='史笔';})
+    +panelChKeys().filter(function(k){return k!=='心声'&&k!==_rsv;})
       .map(function(k){return '◆'+k+'|'+(_dv[k]!=null?_dv[k]:'50');}).join('\n')+'\n'
     +'◆心声|以 ~ 开头发言，你写下的那一句就记在这里\n'
-    +'◆史笔|'+yl+'，'+cn+'。'+(scene?scene.replace(/\s+/g,' ').slice(0,60):'此幕自你落脚之刻写起。')+'\n</sec_char>\n<sec_npc>\n'
+    +(_rsv?('◆'+_rsv+'|'+yl+'，'+cn+'。'+(scene?scene.replace(/\s+/g,' ').slice(0,60):'此幕自你落脚之刻写起。')+'\n'):'')
+    +'</sec_char>\n<sec_npc>\n'
     +npcs.map(function(p){return '◈'+p.name+'|初逢|50|（尚未开口）|'+(p.role||'不详')+'|'+cn+'|不详|不详|（还没看清是谁）';}).join('\n')
     +'\n<sec_world>\n◇纪年|'+yl+'\n◇时地|'+cn+'\n◇天气|晴\n◇安稳|60\n◇大势|尚未分明\n◇将临|尚未分明\n</sec_world>\n</mvu_panel>';
   return {id:'custom',year:y,era:yl,scene:cn,text:body+'\n\n'+mv};
@@ -4554,13 +4562,16 @@ function condereAsk(line,y,nm,cn){
         +npcs.map(function(pp){return '· '+pp.name+'｜'+(pp.role||'')+'｜'+(pp.age||'')+'岁｜'+(pp.blurb||'');}).join('\n')+'\n'):'')
     +'【写法】\n'
     +'1. 严格遵守系统提示里的全部铁则与文风，考据须属于该年代。\n'
-    +'2. 正文 700—1200 字，分小节（可用「**壹 · 小标题**」的形式），依次交代：这一年的时代局势、'
+    +'2. 正文 700—1200 字'
+    +(typeof styleHasSec==='function'&&!styleHasSec()?'，不分小节、不加小标题':'，分小节（可用「**壹 · 小标题**」的形式）')
+    +'，依次交代：这一年的时代局势、'
     +'此地此刻正在发生什么、在场的人各自站在哪里揣着什么心思；最后把场面推到需要'+her+'表态之处停笔。'
     +(scene?'本幕必须从上面【此刻的场面】写起，那段话是玩家定下的，不是建议。\n':'\n')
     +'3. 绝不代替'+her+'说话、行动、下决定、写内心——她的一切属于玩家。\n'
     +'4. 正文之后必须输出一个完整的 <mvu_panel>，字段名、行首符号、竖线分隔与下面的范例一字不差，'
-    +'内容按你新写的这一幕据实填写。◆行只记她的客观外在（戎装／持物／身躯／旁人眼中的观感）'
-    +'与史笔；◆心声那一行请照格式保留，内容写「——」占位即可，不要替她想那一句'
+    +'内容按你新写的这一幕据实填写。◆行只记她的客观外在'
+    +'（身上穿的、随身带的、身子怎么样、旁人怎么看她、此刻归谁管）'
+    +'与那一行编年的册记；◆心声那一行请照格式保留，内容写「——」占位即可，不要替她想那一句'
     +'（与上面第 3 条一致，她的内心属于玩家，游戏会用玩家自己写的独白填这一栏）：\n'
     +refPanel+'\n'
     +'5. 只输出正文与 <mvu_panel>，不要任何解释、不要代码围栏、不要提及本指令。';
@@ -5872,11 +5883,15 @@ function loreFor(text){
   var cbud=Math.max(4000,Math.round(budget*2.4));
   /* since：这一条讲的事哪一年才有。没到年份的整条不发——
      否则跨年份的硬规矩会在还没到那一年的场合每回合注入一次，
-     纪年闸门那一句压不住每回合都在的一整条铁则。 */
+     纪年闸门那一句压不住每回合都在的一整条铁则。
+     这里原来写的是 _yr > |since| 就丢——那是公元前的算法（数越大越早）。
+     这个世界是王历，往前数，同一行判断的意思正好翻了个个儿：
+     核心那条常驻铁则「猪娘身上压着的那几条」标着 since:0，
+     于是 847 > 0 成立，它每一回合都被丢掉，一次都没进过提示词。 */
   var _yr=0;try{_yr=nowYear();}catch(_){}
   function _tooEarly(e){
     if(!e||e.since==null||!_yr)return false;
-    return _yr>Math.abs(e.since);          /* nowYear 返回「前 N 年」的 N，数越大越早 */
+    return _yr<Math.abs(e.since);          /* 王历往前数：还没到那一年才丢 */
   }
   for(var ci=0;ci<lb.length;ci++){var ce=lb[ci];
     if(!ce||ce.on===false||!ce.constant)continue;
@@ -5909,7 +5924,9 @@ function loreFor(text){
   if(dropped)try{console.warn('[lore] 注入预算不足，本回丢弃 '+dropped+' 条');}catch(_){}
   return out.join('\n');
 }
-var ROMA_STYLE='【文体铁则·最高优先级·覆盖模型自身习惯】本卡正文分两层，各守各的腔，严禁互相污染。\n〔一〕地の文（叙述层）＝详实历史小说体。长句可用，从句可用，破折号可用；史实、器物、地理、制度、因果必须交代到位，读者不查资料也能看懂。忌辞藻堆砌，忌抒情泛滥，忌用「仿佛」「宛如」连发。凡涉政治、军制、年代、亲缘的说明，一律落到具体名物与数字（第几年、几里、几人、什么料子、谁的儿子），不许含糊带过。\n〔二〕台词（对白层）＝日本轻小说腔。铁律如下：\n①一句一个念头，句号砸死，绝不把三件事塞进一个长句；\n②关键词单独成行落地（例：「……没有心。」／「楔子不为一个人停。」／「她怕了。」）；\n③长短落差是喜剧与压迫感的引擎：稳重者、年长者、下位者说敬语长台词，铺垫绵密、慇懃而不祥；上位者、狂者、武人一句怼回去，越短越狠；\n④先说死，再收半句（例：「稳妥，不折人。」「……陛下？」）；\n⑤惨事用公事公办的报告体讲，恐怖从语气与内容的落差里渗，不许在台词里加形容词渲染（例：「谨报如下。第一头，肝叶有裂。第二头，同。第三头。……没有心。」）；\n⑥武人、老兵用短促的断言句，可带「记住了」「话我只说一遍」这类收尾；\n⑦【铁则一·高于本节全部文体规范】主角贝罗娜的台词、动作、决定，一个字都不许你写——本节①—⑥、⑧⑨的腔调规范只约束 NPC 与叙述层。（唯一例外见状态栏协议：<mvu_panel> 里 ◆心声 那一行由你按本幕处境写，但正文里依旧不许出现她的内心独白。）玩家已经写出来的主角台词，你可以让 NPC 引用、回应、误解、记恨，但绝不许由你续写、改写、补写，或替她把话说完。需要她表态时，把场面推到她面前，停笔，交还玩家。\n⑧对白一律用「」，引用与强调用『』；省略号用「……」保留余韵；决定性瞬间可插拟声词（咔。咔。咔。／吱呀。）。\n⑨严禁中文网文腔：不许出现「不愧是」「不由得」「心中一凛」「嘴角勾起」「眸子」「淡淡地说道」「不禁」「暗道」等套语，不许网络流行语，不许翻译腔的「哦，我的老伙计」。\n〔三〕分工：叙述负责让人看懂，对白负责有味道。说明性内容一律写进叙述层，不许塞进人物嘴里让他念资料；反过来，人物的性格与压迫感一律靠台词的长短、断句与落差呈现，不许由叙述层直接下判语。';
+/* 罗马线那一整段文体铁则删掉了。它只在 ACTIVE==='roma' 时注入，
+   而这份文档只有 tail 一条线，那个分支一次也走不到——
+   留着的是三千多字的死文本，里面还点着另一张卡的主角名。 */
 /* ============================================================================
    GENIVS · 本地弱AI（纯规则 · 零网络 · 不需要任何 API）
    职责是把三样东西缝起来：三维引擎的账实、云端神谕写的正文、情报台的状态栏。
@@ -6029,7 +6046,9 @@ var GENIVS=(function(){
   function chKeys(){return panelChKeys();}
   /* 前两条原来是「天朗气清」「云压得低」——本身就不含 晴/阴/雨/雪/风/雾 六字之一，
      落到它们时心象图不出图标，下一轮又被自己的校验判成非法再随机一次。 */
-  var WX=['天晴气朗','阴云压得低','风过柱廊','雨敲在瓦上','雾锁河面','雪落石阶'];
+  /* 兜底的天气短语。原来六条写的是罗马：柱廊、瓦、河面、石阶。
+     换成北境村子的天，六条各带一个可取景的关键字（晴阴雨雪风雾）。 */
+  var WX=['天晴气朗','阴云压得低','风从北边下来','雨打在草棚顶上','雾锁林子','雪落在垄沟里'];
 
   function get(rows,k){for(var i=0;i<rows.length;i++)if(rows[i][0]===k)return rows[i].slice(1).join('|');return null;}
   function set(rows,k,v){for(var i=0;i<rows.length;i++)if(rows[i][0]===k){rows[i]=[k,v];return;}rows.push([k,v]);}
@@ -6037,10 +6056,23 @@ var GENIVS=(function(){
     /* 全角数字（模型常写「４２」）先转半角，否则 parseInt 直接 NaN、整栏被判成没写 */
     var t=String(v==null?'':v).replace(/[０-９]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-65248);});
     var n=parseInt(t,10);return isNaN(n)?d:Math.max(0,Math.min(100,n));}
+  /* 跨年。原来只认「前N年」这一种写法（公元前，往回数）——
+     这个世界写的是「王历八四七年」，汉字，而且往前数。两种都认，都按各自的方向走。 */
   function bumpEra(era,d){
     if(!d)return era;
-    return String(era||'').replace(/前(\d+)年/,function(_,y){
-      var yy=+y-Math.floor(d/365);return '前'+(yy>0?yy:1)+'年';});
+    var t=String(era||'');
+    if(/前\s*\d+\s*年/.test(t))
+      return t.replace(/前(\d+)年/,function(_,y){
+        var yy=+y-Math.floor(d/365);return '前'+(yy>0?yy:1)+'年';});
+    var m=t.match(/王历\s*([〇零一二三四五六七八九十百千两0-9]+)\s*年/);
+    if(m){
+      var y0=(typeof cnNum==='function')?cnNum(m[1]):parseInt(m[1],10);
+      if(y0>0){
+        var y1=y0+Math.floor(d/365);
+        if(y1!==y0)return t.replace(m[0],'王历'+y1+'年');
+      }
+    }
+    return t;
   }
 
   function completeMvu(panel,rawText){
@@ -6104,12 +6136,17 @@ var GENIVS=(function(){
        完全平和的宫廷场景也会 44→48→52 一路单调爬到 100 并锁死在「战争化身」。
        另外 AI 明确写出来的值应当是主值，本地启发式只在它周围小幅修正，
        否则玩家会看到「血兴这一栏根本不跟剧情走、也改不动」。 */
-    var bl=num(get(prev.ch,'血兴'),40),nb=num(get(p.ch,'血兴'),bl);
-    var hits=(txt.match(/[攻斩血剑矛盾杀刺]/g)||[]).length;
-    if(ACTIVE==='roma')
-      set(p.ch,'血兴',String(Math.max(0,Math.min(100,nb+(hits?Math.min(8,hits*2):-2)))));
-    if(get(p.ch,'史笔')==null)
-      set(p.ch,'史笔','（本地补记）'+((s&&s.city)||'此地')+'：'+(txt.replace(/\s+/g,'').slice(0,40)||'诸事如常'));
+    /* 保留栏的栏名从卡的 panelSpec.reserved 取，不写死。
+       原来写死成「史笔」——那是上一张卡的栏名，这张卡叫「册记」。
+       结果每一轮都往面板里塞一行卡里根本没有的 ◆史笔，
+       这一行又随「上一幕原值」发回去，教会模型接着写它。 */
+    var RSV='';
+    try{var _r=((CARDS[ACTIVE]&&CARDS[ACTIVE].panelSpec)||{}).reserved;
+        if(_r&&_r.length)RSV=_r[0];}catch(_){}
+    if(RSV&&get(p.ch,RSV)==null){
+      var _pr=get(prev.ch,RSV);
+      set(p.ch,RSV,_pr!=null?_pr:('（本地补记）'+(txt.replace(/\s+/g,'').slice(0,40)||'诸事如常')));
+    }
 
     /* 人物段：AI 写的 ∪ 引擎在场的 ∪ 上一轮没离场的，八字段缺哪补哪 */
     var seen={},gone={};
@@ -6141,17 +6178,19 @@ var GENIVS=(function(){
   }
 
   /* ---------------- 四 · 没有 API 时的降级回合 ---------------- */
+  /* 没配 API 时的降级文本。原来写的是罗马的市集、卫队、库藏账。
+     这一份换成北境的村子——只在断线时才出现，可出现的时候不能出戏。 */
   var TPL={
-    build:['{city}的工匠天没亮就动了土。{what}立起来的时候，围观的人往后退了半步。',
-           '{what}在{pos}落成。新木料的味道盖过了街市的腥气。',
-           '监工把绳墨收了。{what}就在那儿，比图上看着更沉。'],
-    raze :['{what}塌下去的声音并不大，尘却起了半日不散。',
+    build:['木料是昨天拖回来的，还带着树皮。{what}立起来的时候，帮忙的人往后退了半步。',
+           '{what}在{pos}搭起来了。泥还没干，靠上去会留手印。',
+           '钉子不够，最后一截是用木楔顶住的。{what}就在那儿，比原先想的矮一点。'],
+    raze :['{what}塌下去的声音并不大，灰倒是起了半日不散。',
            '拆{what}的人手脚很快。空出来的那块地，比想象中小。'],
-    idle :['市集照常。有人在{pos}为一筐无花果的价钱争起来，声音很大，没人去劝。',
-           '风从城门那边过来，旗动了一下。卫队换了岗。',
-           '库藏的账在天黑前又抄了一遍。金 {gold}，一枚不差。',
-           '{who}在{pos}站了很久，看见你便低下头，没有开口。',
-           '有人在墙根下写字，写到一半停了，把炭条揣回怀里。']
+    idle :['井边有两个人为水桶的次序争起来，声音很大，没人去劝。',
+           '风从北边下来，草棚顶上的草被掀起一角，又落回去。',
+           '磨坊的秤天黑前又过了一遍，磨坊主把袋口重新扎紧。',
+           '{who}在{pos}站了很久，看见你便先低下头，没有开口。',
+           '有人在墙根下用炭划字，划到一半停了，把炭揣回怀里。']
   };
   function pick(pool,tag){
     for(var i=0;i<pool.length;i++){
@@ -6714,12 +6753,6 @@ function sysPrompt(){
     +'而不是靠形容词注水。反装腔铁则管的是台词与姿态，不是篇幅——话要短，场面要足。'
   return [preFront.join('\n'),
     heroRebind(G.system_prompt||''),
-    /* 只给罗马卡注入：这是罗马线的文体规范，里面写着贝罗娜的名字。
-       原来无条件注入，玩周线时 system 里塞着「贝罗娜……自称本座」，
-       是「AI 分不清谁是谁」的直接来源。 */
-    /* 这段文体铁则是给罗马线写的，里头点名「主角贝罗娜」。自定义开局换了人来演时，
-       这一句会和状态栏协议、模式说明打架——模型两边都听，最后还是往贝罗娜身上写。 */
-    (ACTIVE==='roma'?heroRebind(ROMA_STYLE):''),
     heroSheet(),                       /* 换了人来演：先把「你演的是谁」摆在最前面 */
     ((heroIsCard()&&!povHero())?('【玩家角色档案】'+(G.description||''))
                  :('【卡中原主角档案·仅供了解此世的笔调与背景，本局不适用于主角】'+heroDesc(G.description||''))),
@@ -9356,7 +9389,14 @@ function zjPanel(txt,box){
          去「推断」这两项，等于 AI 写好了扔掉再花钱猜回来。 */
       g.npcs.push({name:String(n[0]||'').trim(),state:n[1]||'',favor:isNaN(fv)?null:Math.max(0,Math.min(100,fv)),thought:n[3]||'',role:n[4]||'',place:n[5]||'',age:String(n[6]||'').trim(),sex:String(n[7]||'').trim()});});
     (p.wd||[]).forEach(function(kv){g.world[kv[0]]=kv.slice(1).join('|');});
-    (p.ch||[]).forEach(function(kv){if(kv[0]==='史笔')g.world['记录']=kv.slice(1).join('|');});
+    /* 编年那一栏的栏名从卡的 panelSpec.reserved 取。写死成「史笔」是上一张卡留下的：
+       这张卡叫「册记」，于是 g.world['记录'] 永远是空的，
+       长程记忆每一条只好退回去截正文的前七十个字——
+       卡里那一行专门写好的、编年体、只记事实的册记，一个字都没用上。 */
+    var _rk='史笔';
+    try{var _rr=((CARDS[ACTIVE]&&CARDS[ACTIVE].panelSpec)||{}).reserved;
+        if(_rr&&_rr.length)_rk=_rr[0];}catch(_){}
+    (p.ch||[]).forEach(function(kv){if(kv[0]===_rk)g.world['记录']=kv.slice(1).join('|');});
   }
   box.k=txt;box.p=g;return g;
 }
@@ -9895,7 +9935,7 @@ function memChronicle(){
   for(var i=lines.length-1;i>=8;i--){if(used+lines[i].length>7000)break;tail.unshift(lines[i]);used+=lines[i].length+1;}
   return head.join('\n')+'\n……（中略 '+(lines.length-8-tail.length)+' 条，已录于长卷）……\n'+tail.join('\n');
 }
-/* 编年史 ANNALES：长卷时间轴（Ghost/RitusZhou axisInner 同构；纪年章+节点+史笔） */
+/* 编年史 ANNALES：长卷时间轴（纪年章＋节点＋册记那一行） */
 /* 取叙事流末尾若干字。直接 .textContent 会把整局的文字（几十万到几百万字）
    拼成一个大字符串再切一刀，每回合白干一次——回合越多越贵。
    改为只翻最后几个段落，够数就停。 */
@@ -9944,7 +9984,7 @@ function memPaneInner(compact){
       return '<div style="border:1px solid rgba(201,155,63,.6);padding:11px 12px;margin-bottom:6px;background:rgba(236,236,232,.02)">'
         +'<div style="display:flex;gap:8px"><input id="zjMeE" value="'+esc(m.e||'')+'" placeholder="纪年" style="'+min+';flex:1"><input id="zjMeD" value="'+esc(m.d||'')+'" placeholder="时地" style="'+min+';flex:1"></div>'
         +'<input id="zjMeA" value="'+esc(m.a||'')+'" placeholder="我之举" style="'+min+';margin-top:7px">'
-        +'<textarea id="zjMeS" placeholder="史笔" style="'+min+';margin-top:7px;min-height:64px;resize:vertical;font-family:inherit;line-height:1.6">'+esc(m.s||'')+'</textarea>'
+        +'<textarea id="zjMeS" placeholder="册记" style="'+min+';margin-top:7px;min-height:64px;resize:vertical;font-family:inherit;line-height:1.6">'+esc(m.s||'')+'</textarea>'
         +'<div style="display:flex;gap:9px;margin-top:9px;justify-content:flex-end"><button data-act="memCancel" class="obtn btn" style="font-size:11.5px;letter-spacing:.15em;padding:6px 14px">取消</button><button data-act="memSave" class="gbtn btn" style="font-size:11.5px;letter-spacing:.18em;padding:6px 16px">保 存</button></div></div>';
     }
     return '<div style="display:flex;gap:10px;align-items:flex-start;border:1px solid rgba(236,236,232,.12);padding:9px 12px;margin-bottom:6px;background:rgba(236,236,232,.015)">'
@@ -9958,7 +9998,7 @@ function memPaneInner(compact){
   if(!rows)rows='<div style="text-align:center;padding:30px 0;font-size:11.5px;letter-spacing:.25em;color:var(--mut)">长卷尚空 · 行过一轮自动记一笔</div>';
   var intro=compact
     ?'<div style="font-size:11px;letter-spacing:.08em;line-height:1.9;color:var(--mut)">长程记忆：每轮自动摘成一条纪要，永久保存并全文送呈 AI。</div>'
-    :'<div style="font-size:11px;line-height:1.9;color:var(--ink2)">长程记忆替你记性好：<b style="color:var(--gold2)">每一轮</b>的纪年、时地、我之举与史笔都会自动摘成一条纪要，<b style="color:var(--gold2)">永久保存并每轮全文送呈 AI</b>——即使你的模型上下文很短、正文历史被截断，它也始终知道这一局发生过什么。</div>';
+    :'<div style="font-size:11px;line-height:1.9;color:var(--ink2)">长程记忆替你记性好：<b style="color:var(--gold2)">每一轮</b>的纪年、时地、我之举与册记都会自动摘成一条纪要，<b style="color:var(--gold2)">永久保存并每轮全文送呈 AI</b>——即使你的模型上下文很短、正文历史被截断，它也始终知道这一局发生过什么。</div>';
   return intro
     +'<div style="display:flex;gap:12px;align-items:center;margin:16px 0;flex-wrap:wrap">'
     +'<div class="btn" data-act="memToggle" style="cursor:pointer;padding:7px 14px;font-size:11.5px;letter-spacing:.18em;border:1px solid '+(on?'rgba(201,155,63,.55)':'rgba(236,236,232,.2)')+';color:'+(on?'var(--gold2)':'var(--mut)')+'">'+(on?'✓ 注入中':'已停用')+'</div>'
