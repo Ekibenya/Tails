@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <style id="web-trim">#pnTx,#arrTx{display:none!important}#arr3d{display:none!important}#lineTg{display:none!important}#gtSnd{display:none!important}#dlgBgm{display:none!important}.sRow:has(#cfgBgm){display:none!important}</style>
-<script id="web-no3d">(function(){
+<script id="web-no3d">window.__ROMA_NO3D__=true;(function(){
 function arm(){var g=document.getElementById("game");if(!g){setTimeout(arm,120);return;}
 var mo=new MutationObserver(function(){if(g.classList.contains("txOpen")||g.classList.contains("tx2")||g.classList.contains("txBig"))g.classList.remove("txOpen","tx2","txBig");});
 mo.observe(g,{attributes:true,attributeFilter:["class"]});g.classList.remove("txOpen","tx2","txBig");}
@@ -2200,6 +2200,10 @@ window.__GAME_TAIL__ = {"panelSpec":{"textOrder":["穿的","带的","身子","�
 /* three.js 加载策略：优先本仓库 core 的现代版（含 GLTF/Meshopt，支持三维天下游历），
    失败（如单文件离线分发）则回退 CDN r128，仅呈现书房场景。 */
 (function(){
+  /* 无三维的分发（独立网页版）在 <head> 里先立起 __ROMA_NO3D__。
+     不认这个开关的话，这一段照旧会去请求 core/three-bundle.min.js，
+     失败再回退到 cdnjs 的 three.min.js——一个纯文字的站每次打开都往站外发一次请求。 */
+  try{if(window.__ROMA_NO3D__){window.__ZJ3D_OFF__=true;window.__THREE_OK__=false;return;}}catch(e){}
   try{if(localStorage.getItem('zj3d_off')==='1'){window.__ZJ3D_OFF__=true;return;}}catch(e){}
   function cdn(){
     var s=document.createElement('script');
@@ -7480,6 +7484,9 @@ function bgmSrc(i,cb){                       /* 资材同制：哈希 .dat + 滚
   }).catch(function(){cb(null);});
 }
 function bgmPlay(i){
+  /* 无三维的分发不带资材包，曲子那四十来个 .dat 一个都不在站上：
+     照旧播的话，每次打开都排四十来条 404，还把首屏拖慢。 */
+  try{if(window.__ROMA_NO3D__)return;}catch(_){}
   BGM.i=i;var a=bgmEl();
   BGM.on=true;$('#gtSnd').classList.add('on');
   $('#gtSnd').title='MVSICA · '+BGM_LIST[i].t+'（点击开启播放器）';
@@ -7637,7 +7644,7 @@ function applyGlass(){
        拉杆推到八成，底色也才两成不透，17px 的正文一路透上来，两层字叠在一起。
        从这里起两者分开：画面那一扇照旧透，装字的那三扇给一档读得成的底。 */
     +'#pnTx{background:rgba(6,6,6,'+(.04+.16*a).toFixed(2)+') !important}'
-    +'.gPanel{background:rgba(6,6,6,'+(.55+.35*a).toFixed(2)+') !important}'
+    +'.gPanel{background:rgba(6,6,6,'+(.70+.28*a).toFixed(2)+') !important}'
     /* 情报台那六扇单独一档更透的：它们背后只有一层细线框，底色跟左边三扇一样厚的话
        线全被压掉，看着就是六块不透的黑板。同一根拉杆，系数减半。 */
     +'.gMfd.mvDeck .mvWin{background:rgba(6,6,6,'+(.02+.08*a).toFixed(2)+') !important}'
