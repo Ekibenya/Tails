@@ -2358,7 +2358,7 @@ var track=$('#track'),cards=[];
    而这张表原本只有十七项——第 17 项往后 ORDERS[i] 是 undefined，
    colPts 的 switch 一条都不命中，最后四张卡的粒子数组是空的（柱子整根不见）。
    旧的十七种一个不动，只在后面接四种，并给 switch 补 default 兜底。 */
-var ORDERS=['CONDITOR','GREATSWORD','RUNEBLADE','FLAMBERGE','CLAYMORE','FALCHION',
+var ORDERS=['RUNEBLADE','FLAMBERGE','GREATSWORD','CLAYMORE','FALCHION','GREATSWORD',
             'GREATSWORD','RUNEBLADE','FLAMBERGE','CLAYMORE','FALCHION',
             'GREATSWORD','RUNEBLADE','FLAMBERGE','CLAYMORE','FALCHION',
             'GREATSWORD','RUNEBLADE','FLAMBERGE','CLAYMORE','FALCHION'];
@@ -2391,9 +2391,11 @@ function colPts(i){
       }
     }
   }
-  /* 血槽：沿中线的一道亮点，剑身上最显眼的一条 */
-  function fuller(n,y0,y1,w){
-    for(var k=0;k<n;k++){var t=rnd(),y=y0+t*(y1-y0);
+  /* 血槽：沿中线的一道亮点，剑身上最显眼的一条。
+     y0/y1 传的是剑身整段，a/b 是血槽在剑身上的起止比例——这样 w(t) 拿到的 t
+     和剑身是同一套，血槽的宽度才跟着刃宽走。 */
+  function fuller(n,y0,y1,w,a,b){
+    for(var k=0;k<n;k++){var t=a+rnd()*(b-a),y=y0+t*(y1-y0);
       push((rnd()-.5)*w(t)*.34,y,(rnd()<.5?1:-1)*.004,rnd()<.34);}
   }
   /* 护手：横过来的一条，中间厚两端薄，可下弯（sweep<0 是往剑尖那边翘） */
@@ -2425,58 +2427,67 @@ function colPts(i){
     if(gem)for(var g=0;g<26;g++){var a=rnd()*Math.PI*2,rr2=r*.42*rnd();
       push(rr2*Math.cos(a),y+rr2*Math.sin(a)*.8,r*.55,true);}
   }
-  /* 符文：刃面上一列亮点 */
-  function runes(n,y0,y1,w){
-    for(var k=0;k<n;k++){var t=rnd(),y=y0+t*(y1-y0);
+  /* 符文：刃面上一列亮点。y0/y1 与 a/b 的约定同 fuller。 */
+  function runes(n,y0,y1,w,a,b){
+    for(var k=0;k<n;k++){var t=a+rnd()*(b-a),y=y0+t*(y1-y0);
       push((rnd()-.5)*w(t)*.9,y,(rnd()<.5?1:-1)*.006,true);}
   }
-  var k;
+  /* 刃宽函数。base 是根部半宽，drop 是一路收到剑尖的比例，f 是「剑尖」那一段
+     占剑身全长的比例——这一段按卵形收到 0。
+     上一版没有这一段：宽度到 t=1 也还剩根部的三成多，剑身就平着截断了，
+     看上去像被削掉了尖。 */
+  function taper(base,drop,f){
+    return function(t){
+      var w=base*(1-t*drop)+.005;
+      if(t>1-f){var u=(t-(1-f))/f;w*=Math.sqrt(Math.max(0,1-u*u));}
+      return w;
+    };
+  }
+  var W;
   /* 各式剑：宽窄、长短、护手、柄头各不相同，但都是同一副骨架 */
   switch(ORDERS[i]){
-    case 'CONDITOR':      /* 自定义之剑：剑身未成形，只有轮廓与一缕升起的火星 */
-      blade(600,.34,.98,function(t){return .096*(1-t*.76)+.008;},function(){return .012;},0,true);
-      fuller(100,.38,.86,function(t){return .096*(1-t*.76)+.008;});
-      guard(200,.318,.275,.027,-.046,true);
-      grip(160,.115,.308,.031);
-      pommel(140,.082,.060,true);
-      for(k=0;k<120;k++){var t=rnd();               /* 柄头往上飘的星火 */
-        push((rnd()-.5)*.10*t,1.02+t*.16,(rnd()-.5)*.06*t,rnd()<.5);}
-      break;
     case 'CLAYMORE':      /* 长阔剑：细长、护手直、柄头方 */
-      blade(700,.30,1.05,function(t){return .050*(1-t*.80)+.005;},function(){return .008;},0,true);
-      fuller(110,.34,.92,function(t){return .050*(1-t*.80)+.005;});
-      guard(130,.290,.170,.017,-.012,false);
-      grip(170,.100,.282,.024);
-      pommel(90,.075,.042,false);
+      W=taper(.042,.34,.20);
+      blade(700,.30,1.10,W,function(){return .008;},0,true);
+      fuller(110,.30,1.10,W,.06,.76);
+      guard(130,.290,.150,.016,-.010,false);
+      grip(170,.100,.282,.022);
+      pommel(90,.075,.040,false);
       break;
     case 'FLAMBERGE':     /* 焰形剑：刃口起伏 */
-      blade(740,.34,1.02,function(t){return .092*(1-t*.76)+.008;},function(){return .011;},16,true);
-      fuller(100,.38,.88,function(t){return .092*(1-t*.76)+.008;});
-      guard(200,.318,.270,.026,-.046,true);
-      grip(160,.112,.308,.030);
-      pommel(130,.080,.058,true);
+      W=taper(.058,.42,.19);
+      blade(740,.34,1.04,W,function(){return .011;},16,true);
+      fuller(100,.34,1.04,W,.06,.74);
+      guard(200,.318,.200,.024,-.042,true);
+      grip(160,.112,.308,.027);
+      pommel(130,.080,.052,true);
       break;
     case 'RUNEBLADE':     /* 符文剑：刃面刻满符文 */
-      blade(660,.34,1.00,function(t){return .100*(1-t*.74)+.009;},function(){return .012;},0,true);
-      runes(200,.40,.88,function(t){return .100*(1-t*.74)+.009;});
-      guard(210,.318,.280,.027,-.044,true);
-      grip(160,.112,.308,.031);
-      pommel(140,.080,.060,true);
+      W=taper(.062,.42,.19);
+      blade(660,.34,1.02,W,function(){return .012;},0,true);
+      runes(200,.34,1.02,W,.10,.74);
+      guard(210,.318,.210,.025,-.040,true);
+      grip(160,.112,.308,.028);
+      pommel(140,.080,.054,true);
       break;
-    case 'FALCHION':      /* 单刃厚背刀：越往尖越宽 */
-      blade(640,.30,.98,function(t){return .045+.038*t*t;},function(){return .012;},0,true);
-      fuller(80,.34,.86,function(t){return .045+.030*t;});
-      guard(130,.288,.150,.019,-.020,false);
-      grip(150,.110,.278,.027);
-      pommel(100,.080,.046,false);
+    case 'FALCHION':      /* 单刃厚背刀：越往尖越宽，最后一段斜收成尖 */
+      W=function(t){var w=.036+.030*t*t+.004;
+        if(t>.86){var u=(t-.86)/.14;w*=Math.sqrt(Math.max(0,1-u*u));}
+        return w;};
+      blade(640,.30,1.00,W,function(){return .012;},0,true);
+      fuller(80,.30,1.00,W,.08,.72);
+      guard(130,.288,.135,.018,-.018,false);
+      grip(150,.110,.278,.025);
+      pommel(100,.080,.044,false);
       break;
     case 'GREATSWORD':    /* 巨剑：宽刃、大护手、大柄头 */
     default:
-      blade(780,.34,1.00,function(t){return .115*(1-t*.72)+.010;},function(){return .013;},0,true);
-      fuller(130,.38,.88,function(t){return .115*(1-t*.72)+.010;});
-      guard(230,.320,.310,.030,-.052,true);
-      grip(170,.115,.310,.032);
-      pommel(150,.082,.064,true);
+      W=taper(.070,.40,.17);
+      blade(780,.34,1.06,W,function(){return .013;},0,true);
+      fuller(130,.34,1.06,W,.06,.76);
+      guard(230,.320,.230,.026,-.046,true);
+      grip(170,.115,.310,.028);
+      pommel(150,.082,.056,true);
       break;
   }
   return pts;
