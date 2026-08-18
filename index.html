@@ -2358,114 +2358,126 @@ var track=$('#track'),cards=[];
    而这张表原本只有十七项——第 17 项往后 ORDERS[i] 是 undefined，
    colPts 的 switch 一条都不命中，最后四张卡的粒子数组是空的（柱子整根不见）。
    旧的十七种一个不动，只在后面接四种，并给 switch 补 default 兜底。 */
-var ORDERS=['CONDITOR','DORIC','IONIC','CORINTHIAN','TUSCAN','COMPOSITE','SOLOMONIC','TRAJAN','RUIN',
-            'MINOAN','OBELISK','PROTO-DORIC','LOTUS','PAPYRUS','PALM','ATTIC','AEOLIC',
-            'PERSEPOLITAN','HATHORIC','BYZANTINE','NABATAEAN'];
-var FAM   =['LIBERA','GREEK','GREEK','GREEK','ROMAN','ROMAN','ROMAN','ROMAN','GREEK',
-            'GREEK','EGYPTIAN','EGYPTIAN','EGYPTIAN','EGYPTIAN','EGYPTIAN','GREEK','GREEK',
-            'PERSIAN','EGYPTIAN','GREEK','ROMAN'];
+var ORDERS=['CONDITOR','GREATSWORD','RUNEBLADE','FLAMBERGE','CLAYMORE','FALCHION',
+            'GREATSWORD','RUNEBLADE','FLAMBERGE','CLAYMORE','FALCHION',
+            'GREATSWORD','RUNEBLADE','FLAMBERGE','CLAYMORE','FALCHION',
+            'GREATSWORD','RUNEBLADE','FLAMBERGE','CLAYMORE','FALCHION'];
+/* 卡面抬头里的那个「族属」。原来是 GREEK / ROMAN / EGYPTIAN，跟着柱式走；
+   现在跟着剑走，用这个世界里出这种剑的地方。 */
+var FAM   =['LIBERA','REDRICH','NORDMARK','FRANKEN','SOLDVN','MERCATO',
+            'REDRICH','NORDMARK','FRANKEN','SOLDVN','MERCATO',
+            'REDRICH','NORDMARK','FRANKEN','SOLDVN','MERCATO',
+            'REDRICH','NORDMARK','FRANKEN','SOLDVN','MERCATO'];
 /* deterministic RNG per column so layouts are stable across sessions */
+/* ---- 粒子剑。原来这里是十七种古典柱式（多立克、爱奥尼、科林斯……），
+   那是罗马卡留下来的东西，跟剑与魔法的异世界不挨着。整段换成剑。
+   点云的坐标系不变：y 从 0.07（剑柄头）到 1.05（剑尖），中线在 y=0.52，
+   所以摆位、透视、旋转、聚形那一整套一个字都不用改。 */
 function colPts(i){
   var seed=i*7.31+3.7;
   function rnd(){seed=Math.sin(seed*127.1+311.7)*43758.5453;return seed-Math.floor(seed);}
   var pts=[];
-  function push(x,y,z,hi){pts.push({x:x,y:y,z:z,hi:hi||rnd()<.06});}
-  function rev(y,r,fl,fd,tw){                       /* surface of revolution, optional flutes/twist */
-    var th=rnd()*Math.PI*2+(tw||0)*y;
-    var rr=fl?r*(1-fd*(0.5+0.5*Math.cos(fl*th))):r;
-    push(rr*Math.cos(th),y,rr*Math.sin(th));
-  }
-  function sq(y,hw){                                /* square-plan perimeter (plinth/abacus/obelisk) */
-    var s=Math.floor(rnd()*4),u=rnd()*2-1;
-    var p=[[u*hw,hw],[hw,u*hw],[u*hw,-hw],[-hw,u*hw]][s];
-    push(p[0],y,p[1]);
-  }
-  function shaft(n,y0,y1,r0,r1,fl,fd,tw){           /* tapered shaft with entasis bulge */
-    for(var k=0;k<n;k++){var y=y0+rnd()*(y1-y0),f=(y-y0)/(y1-y0);
-      rev(y,(r0+(r1-r0)*f)*(1+.04*Math.sin(Math.PI*f)),fl,fd,tw);}
-  }
-  function ring(n,y,r){for(var k=0;k<n;k++)rev(y+(rnd()-.5)*.012,r);}
-  function volute(n,cx,cy){                         /* ionic scroll, front plane */
-    for(var k=0;k<n;k++){var t=rnd(),a=t*Math.PI*5.2;var rr=.055*(1-t*.82);
-      push(cx+rr*Math.sin(a),cy+rr*Math.cos(a)*.9,(rnd()-.5)*.02,t>.7);}
-  }
-  function bell(n,y0,y1,r0,r1,leaf){                /* corinthian/papyrus flare */
-    for(var k=0;k<n;k++){var t=rnd(),y=y0+t*(y1-y0);
-      var r=r0+(r1-r0)*t*t;var th=rnd()*Math.PI*2;
-      if(leaf)r*=1+.13*Math.max(0,Math.sin(8*th+t*3))*t;
-      push(r*Math.cos(th),y,r*Math.sin(th));}
-  }
-  function base(){for(var k=0;k<90;k++)sq(rnd()*.05,.115);ring(60,.075,.095);}
-  var R=.072,k;
-  switch(ORDERS[i]){
-    case 'CONDITOR':                /* 自定义之柱：三阶方座+阿提卡座环+凹槽柱身+钟形柱头方冠，柱顶一缕螺旋星火示「起造」 */
-      for(k=0;k<120;k++)sq(rnd()*.03,.13);            /* 方座下阶 */
-      for(k=0;k<90;k++)sq(.03+rnd()*.028,.117);       /* 方座中阶 */
-      for(k=0;k<70;k++)sq(.058+rnd()*.022,.105);      /* 方座上阶 */
-      ring(80,.088,.098);ring(64,.104,.086);          /* 座环：圆凸线脚两道 */
-      shaft(640,.115,.80,R+.006,R-.010,20,.10);       /* 凹槽柱身带卷杀 */
-      ring(72,.812,.081);                              /* 颈环 */
-      bell(150,.828,.885,R-.013,.106);                 /* 钟形柱头 */
-      for(k=0;k<110;k++)sq(.885+rnd()*.045,.114);      /* 方冠 */
-      for(k=0;k<86;k++){                               /* 起造星火：细螺旋自柱顶升起收束 */
-        var tf=rnd(),af=tf*Math.PI*5.6;
-        var rf=.012+.052*(1-tf);
-        push(rf*Math.cos(af),.935+tf*.10,rf*Math.sin(af),tf>.5);
+  function push(x,y,z,hi){pts.push({x:x,y:y,z:z,hi:hi||rnd()<.05});}
+  /* 剑身：正反两面各一层点，外加两道刃线。w(t) 给半宽，th(t) 给半厚。 */
+  function blade(n,y0,y1,w,th,wave,edgeHi){
+    for(var k=0;k<n;k++){
+      var t=rnd(), y=y0+t*(y1-y0), hw=w(t), ht=th(t);
+      var off=wave?Math.sin(t*wave)*hw*.42:0;        /* 焰形剑：刃口起伏 */
+      var u=rnd()*2-1;
+      if(rnd()<.30){                                  /* 刃线：两侧各一条，最亮 */
+        push(off+(u<0?-hw:hw),y,(rnd()-.5)*ht*.5,edgeHi&&rnd()<.42);
+      }else{                                          /* 两面 */
+        push(off+u*hw,y,(rnd()<.5?ht:-ht)*(0.55+0.45*rnd()),false);
       }
+    }
+  }
+  /* 血槽：沿中线的一道亮点，剑身上最显眼的一条 */
+  function fuller(n,y0,y1,w){
+    for(var k=0;k<n;k++){var t=rnd(),y=y0+t*(y1-y0);
+      push((rnd()-.5)*w(t)*.34,y,(rnd()<.5?1:-1)*.004,rnd()<.34);}
+  }
+  /* 护手：横过来的一条，中间厚两端薄，可下弯（sweep<0 是往剑尖那边翘） */
+  function guard(n,y,span,thick,sweep,knob){
+    for(var k=0;k<n;k++){
+      var u=rnd()*2-1, ax=Math.abs(u);
+      var yy=y+sweep*ax*ax;
+      var hh=thick*(1-.55*ax);
+      push(u*span, yy+(rnd()-.5)*hh*2, (rnd()-.5)*thick*1.6, ax>.86&&rnd()<.3);
+      if(knob&&ax>.92)push(u*span*(1+.06*rnd()),yy+(rnd()-.5)*.02,(rnd()-.5)*.02,rnd()<.5);
+    }
+  }
+  /* 握柄：细圆柱 + 缠绳的环 */
+  function grip(n,y0,y1,r){
+    for(var k=0;k<n;k++){
+      var t=rnd(), y=y0+t*(y1-y0), th=rnd()*Math.PI*2;
+      var band=Math.sin(t*46)>.55;                    /* 缠绳一圈一圈 */
+      var rr=r*(band?1.20:1);
+      push(rr*Math.cos(th),y,rr*Math.sin(th)*.72,band&&rnd()<.18);
+    }
+  }
+  /* 柄头：一颗扁球，中间嵌一粒石头 */
+  function pommel(n,y,r,gem){
+    for(var k=0;k<n;k++){
+      var t=rnd()*Math.PI*2, ph=Math.acos(2*rnd()-1);
+      var rr=r*(0.86+0.14*rnd());
+      push(rr*Math.sin(ph)*Math.cos(t),y+rr*Math.cos(ph)*.78,rr*Math.sin(ph)*Math.sin(t)*.7,false);
+    }
+    if(gem)for(var g=0;g<26;g++){var a=rnd()*Math.PI*2,rr2=r*.42*rnd();
+      push(rr2*Math.cos(a),y+rr2*Math.sin(a)*.8,r*.55,true);}
+  }
+  /* 符文：刃面上一列亮点 */
+  function runes(n,y0,y1,w){
+    for(var k=0;k<n;k++){var t=rnd(),y=y0+t*(y1-y0);
+      push((rnd()-.5)*w(t)*.9,y,(rnd()<.5?1:-1)*.006,true);}
+  }
+  var k;
+  /* 各式剑：宽窄、长短、护手、柄头各不相同，但都是同一副骨架 */
+  switch(ORDERS[i]){
+    case 'CONDITOR':      /* 自定义之剑：剑身未成形，只有轮廓与一缕升起的火星 */
+      blade(600,.34,.98,function(t){return .096*(1-t*.76)+.008;},function(){return .012;},0,true);
+      fuller(100,.38,.86,function(t){return .096*(1-t*.76)+.008;});
+      guard(200,.318,.275,.027,-.046,true);
+      grip(160,.115,.308,.031);
+      pommel(140,.082,.060,true);
+      for(k=0;k<120;k++){var t=rnd();               /* 柄头往上飘的星火 */
+        push((rnd()-.5)*.10*t,1.02+t*.16,(rnd()-.5)*.06*t,rnd()<.5);}
       break;
-    case 'ATTIC':
-    case 'DORIC':      base();shaft(650,.10,.84,R+.008,R-.010,20,.10);bell(120,.84,.90,R-.01,.10);for(k=0;k<130;k++)sq(.90+rnd()*.08,.112);break;
-    case 'AEOLIC':
-    case 'IONIC':      base();shaft(620,.10,.82,R,R-.012,24,.08);ring(70,.83,.085);volute(120,-.088,.90);volute(120,.088,.90);for(k=0;k<90;k++)sq(.955+rnd()*.045,.105);break;
-    case 'CORINTHIAN': base();shaft(560,.10,.78,R,R-.012,24,.08);bell(320,.78,.955,R-.012,.118,true);for(k=0;k<90;k++)sq(.955+rnd()*.045,.118);break;
-    case 'TUSCAN':     base();shaft(700,.10,.85,R+.01,R-.008);bell(110,.85,.92,R-.008,.095);ring(90,.945,.10);break;
-    case 'COMPOSITE':  base();shaft(560,.10,.78,R,R-.012,24,.08);bell(220,.78,.92,R-.012,.105,true);volute(90,-.085,.945);volute(90,.085,.945);for(k=0;k<70;k++)sq(.965+rnd()*.035,.11);break;
-    case 'SOLOMONIC':  base();shaft(760,.10,.86,R+.004,R-.006,0,0,9.5);bell(100,.86,.92,R-.006,.095);for(k=0;k<110;k++)sq(.92+rnd()*.06,.105);break;
-    case 'TRAJAN':     for(k=0;k<200;k++)sq(rnd()*.16,.105);shaft(520,.16,.86,R,R-.008);
-                       for(k=0;k<260;k++){var t=rnd(),y=.17+t*.67;var th=t*Math.PI*26;var r=(R-.008*((y-.16)/.7))+.006;push(r*Math.cos(th),y,r*Math.sin(th),rnd()<.25);}
-                       for(k=0;k<110;k++)sq(.90+rnd()*.07,.10);break;
-    case 'RUIN':       base();
-                       for(k=0;k<620;k++){var th2=rnd()*Math.PI*2,yb=.10+rnd()*.52;
-                         var cut=.50+.12*Math.sin(3*th2+1.3);if(yb>cut&&rnd()>.15)continue;
-                         var rr2=(R+.006-.014*(yb/.62))*(1-.10*(0.5+0.5*Math.cos(20*th2)));
-                         push(rr2*Math.cos(th2),yb,rr2*Math.sin(th2));}
-                       for(k=0;k<140;k++){var a2=rnd()*Math.PI*2,rr3=.12+rnd()*.10;push(rr3*Math.cos(a2),rnd()*.035,rr3*Math.sin(a2),rnd()<.04);}break;
-    case 'MINOAN':     ring(90,.05,.105);shaft(680,.07,.86,R-.022,R+.014);ring(140,.88,.115);for(k=0;k<110;k++)sq(.93+rnd()*.06,.118);break;
-    case 'OBELISK':    for(k=0;k<170;k++)sq(rnd()*.08,.125);
-                       for(k=0;k<720;k++){var y3=.08+rnd()*.77;sq(y3,.075-.03*((y3-.08)/.77));}
-                       for(k=0;k<180;k++){var y4=.85+rnd()*.15;sq(y4,Math.max(.002,.045*(1-(y4-.85)/.15)));}break;
-    case 'PROTO-DORIC':base();shaft(760,.10,.90,R+.006,R-.006,16,.16);for(k=0;k<120;k++)sq(.90+rnd()*.07,.10);break;
-    case 'LOTUS':      base();shaft(600,.10,.80,R,R-.010,8,.18);
-                       for(k=0;k<300;k++){var t5=rnd(),y5=.80+t5*.18;
-                         var r5=.062+.048*Math.sin(t5*Math.PI*.9)-(t5>.8?(t5-.8)*.22:0);rev(y5,Math.max(.02,r5),8,.14);}break;
-    case 'PAPYRUS':    ring(80,.03,.095);shaft(540,.05,.80,R-.018,R-.004,8,.12);bell(340,.80,.97,R-.004,.135);ring(90,.975,.138);break;
-    case 'PALM':       base();shaft(640,.10,.84,R,R-.008);ring(80,.85,.08);
-                       for(var fr=0;fr<9;fr++){var fa=fr*Math.PI*2/9+.2;
-                         for(k=0;k<26;k++){var t6=k/26+rnd()*.02;
-                           var rr6=t6*.115,y6=.86+.13*Math.sin(Math.min(1,t6)*2.4)-.05*t6*t6;
-                           push(rr6*Math.cos(fa)+(rnd()-.5)*.008,y6,rr6*Math.sin(fa)+(rnd()-.5)*.008,t6>.75);}}break;
-    /* —— 以下四种是开局加到二十局之后补的，用的还是上面那几个基元 —— */
-    case 'PERSEPOLITAN':  /* 波斯：细高柱身四十八道浅槽，双涡卷柱头 */
-                       base();shaft(720,.10,.86,R-.012,R-.020,48,.06);ring(60,.866,.062);
-                       volute(110,-.070,.905);volute(110,.070,.905);
-                       for(k=0;k<90;k++)sq(.940+rnd()*.040,.100);break;
-    case 'HATHORIC':      /* 埃及：素柱身托一整块方形柱头，颈下一道环 */
-                       base();shaft(600,.10,.800,R,R-.006);ring(70,.808,.084);
-                       for(k=0;k<200;k++)sq(.820+rnd()*.100,.122);
-                       ring(80,.925,.118);break;
-    case 'BYZANTINE':     /* 拜占庭：篮式柱头，上压一块冲力方石 */
-                       base();shaft(560,.10,.780,R,R-.014);ring(60,.788,.076);
-                       bell(300,.790,.905,R-.014,.116,true);
-                       for(k=0;k<120;k++)sq(.905+rnd()*.055,.112);break;
-    case 'NABATAEAN':     /* 佩特拉：矮壮柱身，素喇叭柱头加两层方冠 */
-                       for(k=0;k<140;k++)sq(rnd()*.06,.128);
-                       shaft(680,.06,.800,R+.014,R+.002);
-                       bell(130,.800,.875,R+.002,.108);
-                       for(k=0;k<110;k++)sq(.875+rnd()*.030,.118);
-                       for(k=0;k<80;k++)sq(.905+rnd()*.030,.106);break;
-    default:              /* 表再被超出也不许出现空柱：退回托斯卡纳 */
-                       base();shaft(700,.10,.85,R+.01,R-.008);bell(110,.85,.92,R-.008,.095);
-                       ring(90,.945,.10);break;
+    case 'CLAYMORE':      /* 长阔剑：细长、护手直、柄头方 */
+      blade(700,.30,1.05,function(t){return .050*(1-t*.80)+.005;},function(){return .008;},0,true);
+      fuller(110,.34,.92,function(t){return .050*(1-t*.80)+.005;});
+      guard(130,.290,.170,.017,-.012,false);
+      grip(170,.100,.282,.024);
+      pommel(90,.075,.042,false);
+      break;
+    case 'FLAMBERGE':     /* 焰形剑：刃口起伏 */
+      blade(740,.34,1.02,function(t){return .092*(1-t*.76)+.008;},function(){return .011;},16,true);
+      fuller(100,.38,.88,function(t){return .092*(1-t*.76)+.008;});
+      guard(200,.318,.270,.026,-.046,true);
+      grip(160,.112,.308,.030);
+      pommel(130,.080,.058,true);
+      break;
+    case 'RUNEBLADE':     /* 符文剑：刃面刻满符文 */
+      blade(660,.34,1.00,function(t){return .100*(1-t*.74)+.009;},function(){return .012;},0,true);
+      runes(200,.40,.88,function(t){return .100*(1-t*.74)+.009;});
+      guard(210,.318,.280,.027,-.044,true);
+      grip(160,.112,.308,.031);
+      pommel(140,.080,.060,true);
+      break;
+    case 'FALCHION':      /* 单刃厚背刀：越往尖越宽 */
+      blade(640,.30,.98,function(t){return .045+.038*t*t;},function(){return .012;},0,true);
+      fuller(80,.34,.86,function(t){return .045+.030*t;});
+      guard(130,.288,.150,.019,-.020,false);
+      grip(150,.110,.278,.027);
+      pommel(100,.080,.046,false);
+      break;
+    case 'GREATSWORD':    /* 巨剑：宽刃、大护手、大柄头 */
+    default:
+      blade(780,.34,1.00,function(t){return .115*(1-t*.72)+.010;},function(){return .013;},0,true);
+      fuller(130,.38,.88,function(t){return .115*(1-t*.72)+.010;});
+      guard(230,.320,.310,.030,-.052,true);
+      grip(170,.115,.310,.032);
+      pommel(150,.082,.064,true);
+      break;
   }
   return pts;
 }
@@ -2485,7 +2497,7 @@ function buildCards(){
     var el=document.createElement('div');el.className='card';el.dataset.i=i;
     el.innerHTML=
       '<div class="cframe">'+
-        '<span class="ftag">'+(FAM[i]||'IGNOTA')+' ORDER // '+(ORDERS[i]||'ANONYMVS')+'</span>'+
+        '<span class="ftag">'+(FAM[i]||'IGNOTA')+' FORGE // '+(ORDERS[i]||'ANONYMVS')+'</span>'+
         '<span class="fnum">'+(i===0?'SIG_LIBERA':'SIG_'+pad(i-1)+'/'+pad(N-2))+'</span>'+
         '<canvas></canvas>'+
       '</div>'+
@@ -3339,8 +3351,9 @@ function eraDraw(){
 /* ---- game backdrop: particle Roman column — the SAME 3D point clouds as the
    opening-select ring (colPts), same perspective and same auto-spin; the swarm
    assembles a column, dwells while it turns, shatters, re-forms as the next order ---- */
-var COL_CYC=[['TUSCAN','TVSCANICVS'],['DORIC','DORICVS'],['IONIC','IONICVS'],
-             ['CORINTHIAN','CORINTHIVS'],['COMPOSITE','COMPOSITVS']];
+var COL_CYC=[['GREATSWORD','SPATHA MAGNA'],['RUNEBLADE','ENSIS RVNARVM'],
+             ['FLAMBERGE','ENSIS FLAMMEVS'],['CLAYMORE','SPATHA LONGA'],
+             ['FALCHION','CVLTER']];
 var COL_N=1500;
 var GBG={ord:0,phase:0,t0:0,orders:null,p:null,inited:false};   /* phase 0=form 1=hold 2=shatter */
 function colTarget(oi){
