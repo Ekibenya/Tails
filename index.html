@@ -2181,7 +2181,7 @@ html.lux #pnTx #zjScene3D>canvas,html.lux #pnTx #mdScene3D>canvas,html.lux #pnTx
     <div class="psNpcs" id="psNpcs"></div>
     <div style="margin-top:16px">
       <div class="pField"><span>NOMEN&nbsp;·&nbsp;名</span><input id="pfNomen" placeholder="约纳斯"></div>
-      <div class="pField"><span>GENS&nbsp;·&nbsp;氏族</span><input id="pfGens" placeholder="无姓／庄园骑士家"></div>
+      <div class="pField"><span>GENS&nbsp;·&nbsp;家世</span><input id="pfGens" placeholder="无姓／庄园骑士家"></div>
       <div class="pField"><span>AETAS&nbsp;·&nbsp;年龄</span><input id="pfAetas" inputmode="numeric" placeholder="十八"></div>
       <div class="pField"><span>ORTVS&nbsp;·&nbsp;出身</span><input id="pfOrtus" placeholder="佃农次子／猪娘／猫娘…"></div>
     </div>
@@ -3921,7 +3921,8 @@ function heroSheet(){
     +(h.g?('，出身'+h.g):'')+(h.a?('，'+h.a+'岁'):'')+(h.o?('，'+h.o):'')
     +(h.f?'，女子':'')+'。\n'
     +'· '+C+'不在本局中登场，也不许被提起、被暗示、被当作她的前身或真身——'
-    +'这是一个普通人的故事，没有神格、没有隐藏身份，除非玩家自己写出来。\n'
+    +'这是一个普通人的故事：没有前世、没有隐藏的血脉、没有神明附体、没有天生的才具，'
+    +'除非玩家自己写出来。\n'
     +'· 卡中【玩家角色档案】所述的容貌、性情、称谓、口头禅一概不适用于'+h.n
     +'；她的性格由玩家在正文里一句一句写出来，你不得预设。\n'
     +'· 铁则一照旧：'+h.n+'的台词、动作、决定，一个字都不许你写。\n';
@@ -7133,16 +7134,17 @@ function suggGen(){
      否则刚进游戏、最需要「能干什么」提示的那一刻，反而一条策都没有。 */
   if(!last&&GAME.opText)last=stripMvu(GAME.opText);
   if(!last)return;
-  var her=(ACTIVE==='cleo')?(cleoAwake()?'持田信男，46岁，失业独居的大叔（现实侧）':'克娄巴特拉（梦境侧的前世）'):heroName();
+  var her=heroName();
   suggWait();
-  var sys='你是这局历史角色扮演游戏的参谋。根据刚落定的这一幕，替玩家（'+her+'）拟四条可以直接递出去的下一步。\n'
+  var sys='你是这一局角色扮演的参谋。根据刚落定的这一幕，替玩家（'+her+'）拟四条可以直接递出去的下一步。\n'
     +'格式铁则：只输出一个 JSON 字符串数组，恰好四条，别的一个字都不要。\n'
-    +'每条写成「码|内容」。码只能取：话（出声说）、动（做动作）、谋（暗地里）、书（修书）、令（下令）。\n'
+    +'每条写成「码|内容」。码只能取：话（出声说）、动（做动作）、谋（暗地里）、书（修书）、令（吩咐人办）。\n'
     +'内容不超过 14 字、第一人称、具体可执行，落到人名地名物名上，写成大白话，不抒情、不摆金句；'
     +'不要空泛的「继续观察」「再想想」，也不要引号和序号。\n'
+    +'这是一个笨的中世纪：不许出现精巧的机关、系统、换算，也不许在里头算账。\n'
     +'四条要真正互斥，覆盖不同方向（试探／果断／迂回／出人意料）。\n'
     +'第四条恒为冒险策：码后加一个「!」，允许越界、赌一把。\n'
-    +'示例：["话|问布伦努斯要多少金子","动|绕到山丘背面看火势","谋|遣人夜里摸进城","令!|当众宣布不赎城"]';
+    +'示例：["话|问她那个铁环是谁铆的","动|把水囊塞回她手里","谋|绕开磨坊走林子边","令!|当着管事说她是我家的"]';
   callAuxAI(sys,[{role:'user',content:'【刚落定的这一幕】\n'+String(last).slice(-700)}])
   .then(function(t){
     if(seq!==SUGG.seq)return;
@@ -7974,9 +7976,11 @@ function imgPromptBase(sceneText){
     if(frags.length>=12||used+f.length>600)return;
     frags.push(f);used+=f.length;
   });
-  /* 世界基调原来写死 ancient Roman world：玩周纪的人每一张配图都被画成古罗马，
-     而面板上找不到任何可以改掉它的开关。 */
-  var wb='medieval Mongol empire, endless steppe and desert, felt ger camps, banners in the wind';
+  /* 世界基调。这里先后写死过 ancient Roman world 和蒙古草原毡帐——
+     都是上一张卡留下的，跟这个世界不挨着，可面板上又没有任何开关能改掉它，
+     于是每一张配图都被画成别处的风景。换成卡尔提亚：北境的中世纪村落。 */
+  var wb='low fantasy medieval northern europe, rye fields and oak woods, '
+        +'timber and daub cottages, thatched roofs, mud and rain, beastfolk servants';
   return CAM_PROMPT[SET.img.cam]+wb+', dark gold cinematic aesthetic, '
     +frags.join(', ')+(frags.length?', ':'');
 }
