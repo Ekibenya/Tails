@@ -2,7 +2,7 @@
 <html lang="zh">
 <head>
 <meta charset="utf-8">
-<style id="web-trim">#pnTx,#arrTx{display:none!important}#arr3d{display:none!important}#lineTg{display:none!important}#pcZhou{display:none!important}#gtSnd{display:none!important}#dlgBgm{display:none!important}.sRow:has(#cfgBgm){display:none!important}#persona .psFixed{display:block}#persona .psCard#pcRoma{width:100%}</style>
+<style id="web-trim">#pnTx,#arrTx{display:none!important}#arr3d{display:none!important}#lineTg{display:none!important}#gtSnd{display:none!important}#dlgBgm{display:none!important}.sRow:has(#cfgBgm){display:none!important}</style>
 <script id="web-no3d">(function(){
 function arm(){var g=document.getElementById("game");if(!g){setTimeout(arm,120);return;}
 var mo=new MutationObserver(function(){if(g.classList.contains("txOpen")||g.classList.contains("tx2")||g.classList.contains("txBig"))g.classList.remove("txOpen","tx2","txBig");});
@@ -2145,10 +2145,10 @@ html.lux #pnTx #zjScene3D>canvas,html.lux #pnTx #mdScene3D>canvas,html.lux #pnTx
       留空亦可——神谕会按你选的年代与地点自拟一幕。</div>
     <textarea id="pfScene" placeholder="例：城门刚闭，我押着一车军粮被守门的百人队长拦下，他要看通行木牍——而我没有。"></textarea>
     <div class="prBtns">
-      <span class="eBtn" id="prGo">INCIPERE&nbsp;·&nbsp;铸局</span>
+      <span class="eBtn" id="prGo">INCIPERE&nbsp;·&nbsp;自定义开局</span>
       <span class="eBtn" id="prBack">返回</span>
     </div>
-    <div class="esc2">ESC&nbsp;//&nbsp;RETVRN&nbsp;&nbsp;·&nbsp;&nbsp;CTRL&nbsp;+&nbsp;⏎&nbsp;铸局</div>
+    <div class="esc2">ESC&nbsp;//&nbsp;RETVRN&nbsp;&nbsp;·&nbsp;&nbsp;CTRL&nbsp;+&nbsp;⏎&nbsp;开始</div>
   </div>
 </div>
 <div id="persona">
@@ -2161,16 +2161,18 @@ html.lux #pnTx #zjScene3D>canvas,html.lux #pnTx #mdScene3D>canvas,html.lux #pnTx
     <div class="psFixed">
       <div class="psCard" id="pcRoma"><b>莉赛尔</b><span>猪娘&nbsp;·&nbsp;第三所&nbsp;·&nbsp;十七号</span></div>
       <div class="psCard" id="pcZhou"><b>约纳斯</b><span>人类&nbsp;·&nbsp;北境村子&nbsp;·&nbsp;佃农次子</span></div>
+      <div class="psCard" id="pcRein"><b>莱因希尔德</b><span>马娘&nbsp;·&nbsp;庄园骑士的独女&nbsp;·&nbsp;十八</span></div>
+      <div class="psCard" id="pcRosa"><b>罗莎蒙德</b><span>猫娘&nbsp;·&nbsp;男爵家养的小姐&nbsp;·&nbsp;十七</span></div>
     </div>
     <div class="sub" style="margin-top:14px;display:flex;justify-content:space-between;align-items:baseline">
       <span>随机人物&nbsp;·&nbsp;此时此地（自动生成）</span><span class="pcRe" id="pcRe">↻&nbsp;重掷</span>
     </div>
     <div class="psNpcs" id="psNpcs"></div>
     <div style="margin-top:16px">
-      <div class="pField"><span>NOMEN&nbsp;·&nbsp;名</span><input id="pfNomen" placeholder="GAIVS"></div>
-      <div class="pField"><span>GENS&nbsp;·&nbsp;氏族</span><input id="pfGens" placeholder="IVLIA"></div>
-      <div class="pField"><span>AETAS&nbsp;·&nbsp;年龄</span><input id="pfAetas" inputmode="numeric" placeholder="XXI"></div>
-      <div class="pField"><span>ORTVS&nbsp;·&nbsp;出身</span><input id="pfOrtus" placeholder="PLEBS"></div>
+      <div class="pField"><span>NOMEN&nbsp;·&nbsp;名</span><input id="pfNomen" placeholder="约纳斯"></div>
+      <div class="pField"><span>GENS&nbsp;·&nbsp;氏族</span><input id="pfGens" placeholder="无姓／庄园骑士家"></div>
+      <div class="pField"><span>AETAS&nbsp;·&nbsp;年龄</span><input id="pfAetas" inputmode="numeric" placeholder="十八"></div>
+      <div class="pField"><span>ORTVS&nbsp;·&nbsp;出身</span><input id="pfOrtus" placeholder="佃农次子／猪娘／猫娘…"></div>
     </div>
     <div class="note"><i>ENGINE&nbsp;STANDBY</i>&nbsp;—&nbsp;角色编辑壳已就位，属性系统待接入引擎。</div>
     </div>
@@ -2270,7 +2272,9 @@ function clamp01(v){return v<0?0:v>1?1:v;}
 var DPR=Math.min(devicePixelRatio||1,2);
 
 /* ================= selection state ================ */
-var pos=0, vel=0, snapT=null, sel=-1;
+/* 环上第 0 格是自定义开局，正史开局排在它后面。默认停在 0 的话，
+   玩家进来只看见「自定义」，会以为这卡就一个开局。所以默认停在第一个正史开局。 */
+var pos=1, vel=0, snapT=null, sel=-1;
 
 /* ================= terrain ================ */
 var tc=$('#terrain'),tg=tc.getContext('2d');
@@ -2816,8 +2820,8 @@ function opsFromCard(line){
   /* 环上第一张是铸局：自己定年代、自己在地球上拣一处、自己写个人物。
      卡里的正史开局排在它后面。少了这一张，环上每张卡的标号会整体错一位
      （第一局会被标成 CONDERE），而年代闸门那条路也就没有入口了。 */
-  var head=[{id:'custom',cn:'铸局',code:'CONDERE',d:'—',
-             era:'自定义 · 年代与地点由你定 ‖ 扮演·你写的那个人'}];
+  var head=[{id:'custom',cn:'自定义开局',code:'CONDERE',d:'—',
+             era:'自定义 · 地点与人物由你定 ‖ 王历八四七年'}];
   return head.concat(src.map(function(o){
     var y=o.year||0;
     return {id:o.id,cn:o.scene,
@@ -2829,14 +2833,18 @@ function rebuildRing(line){
   var no=opsFromCard(line);
   if(!no.length)return;
   RING_LINE=line;OPS=no;N=OPS.length;
-  pos=0;vel=0;snapT=null;lastSel=-1;
+  pos=(N>1?1:0);vel=0;snapT=null;lastSel=-1;   /* 停在第一个正史开局，别停在自定义那格 */
   buildCards();size();
 }
 function engage(){
   if(linked)return;
   var i=mod(Math.round(pos),N),o=OPS[i];
-  if(o.id==='custom'){                 /* 自定义开局：年份 → 地球选地 → 人物 */
-    ebShow('year');                    /* 弹窗直接盖在选局环上，背景不退回菜单 */
+  if(o.id==='custom'){                 /* 自定义开局：选地 → 人物 */
+    /* 不问年代。这张卡的故事只发生在王历八四七年这一年里，
+       让玩家填年份既没有意义，填错了还会把整局的时地写歪。 */
+    ebClose();
+    if(!MENU.on)menuEnter();           /* 选地在菜单层的那颗球上进行 */
+    eraEnter(847);
     return;
   }
   /* ring → 简介确认弹窗，再入局 */
@@ -3998,11 +4006,29 @@ function psFieldsClear(){
   try{PSNPC.sel=-1;var cs=document.querySelectorAll('#psNpcs .npcCard');
     for(var i=0;i<cs.length;i++)cs[i].classList.remove('on');}catch(_){}
 }
+/* 人物预设：点一张就把身份四栏填好再进局——gameEnter 正是读这四栏认人的。
+   前两张原来点了只是清空字段，等于「用卡的默认主角」；现在一律写清楚是谁。 */
+function psPreset(n,g,a,o){
+  var set=function(id,v){var el=$(id);if(el)el.value=v;};
+  set('#pfNomen',n);set('#pfGens',g);set('#pfAetas',a);set('#pfOrtus',o);
+}
 $('#pcRoma').addEventListener('pointerup',function(e){e.stopPropagation();
-  psFieldsClear();gameEnter('tail');
+  psPreset('莉赛尔','无姓','二十','王家育婴与乳母署第三所的猪娘，名册上十七号');
+  gameEnter('tail');
 });
 $('#pcZhou').addEventListener('pointerup',function(e){e.stopPropagation();
-  psFieldsClear();ERA.act=[];gameEnter('tail');
+  psPreset('约纳斯','无姓','十八','北境村子里佃农的次子，田是哥哥的');
+  ERA.act=[];gameEnter('tail');
+});
+$('#pcRein').addEventListener('pointerup',function(e){e.stopPropagation();
+  psPreset('莱因希尔德','庄园骑士家','十八',
+           '马娘。村外庄园骑士的独女，母亲是索尔杜恩来的马娘骑士。会骑会枪，说话直，约纳斯的青梅竹马');
+  ERA.act=[];gameEnter('tail');
+});
+$('#pcRosa').addEventListener('pointerup',function(e){e.stopPropagation();
+  psPreset('罗莎蒙德','男爵家','十七',
+           '猫娘。村东三里男爵家养的小姐，抱来当女儿养，名册上继承人那栏空着。银灰钻头卷，开口先哼一声');
+  ERA.act=[];gameEnter('tail');
 });
 /* 把地点志写进面板。经纬度谁都看得出来，真正想知道的是「这是什么地方、
    我选的这一年这里正在发生什么」——原来这一栏只有座标与一串随机路人。 */
@@ -4122,7 +4148,12 @@ ebEl.addEventListener('pointerup',function(e){if(e.target===ebEl)ebClose();});
 psEl.addEventListener('pointerup',function(e){if(e.target===psEl)psClose();});
 prEl.addEventListener('pointerup',function(e){if(e.target===prEl)prClose();});
 
-$('#miMiss').addEventListener('pointerup',function(e){e.stopPropagation();lsOpen();});
+/* 这张卡只有一条剧情线，选线页就是一次白点。「开始」直接进选局环。 */
+$('#miMiss').addEventListener('pointerup',function(e){e.stopPropagation();
+  try{lsClose();}catch(_){}
+  rebuildRing(RING_LINE||'tail');
+  menuExit();
+});
 /* ═══════════ INITIVM · 三线选择面板（粒子构筑物） ═══════════
    秦的高台大殿——与开场 SPQR 同一套「粒子聚形」语言：
    把剪影画到离屏画布上采样成目标点，粒子从散乱中逐个归位，归位后保持微颤与偶发高光。 */
@@ -11510,6 +11541,10 @@ $('#iBtn').addEventListener('pointerup',function(e){e.stopPropagation();
 buildCards();
 addEventListener('resize',size);
 size();
+/* 片头（那屏 TAIL ＋ INTRARE）不再等玩家点：加载完直接走原来的退场流程，
+   落在主菜单上。走的是同一个 introExit——DOM 与菜单的初始化顺序一点没变，
+   省掉的只是那一次点击。 */
+introExit();
 var lastSel=-1;
 function loop(t){
  try{
