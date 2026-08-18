@@ -1613,13 +1613,7 @@ html.lux #pnTx #zjScene3D>canvas,html.lux #pnTx #mdScene3D>canvas,html.lux #pnTx
   <div class="mFoot">LINEA&nbsp;NOVA&nbsp;//&nbsp;TAIL.SYS&nbsp;&nbsp;·&nbsp;&nbsp;MMXXIX</div>
 </div>
 
-<div id="intro">
-  <canvas id="introCv"></canvas>
-  <div class="iEyebrow">─&nbsp;&nbsp;LINEA&nbsp;NOVA&nbsp;//&nbsp;TAIL&nbsp;&nbsp;─</div>
-  <div class="iSub">VNVS&nbsp;SOL&nbsp;IN&nbsp;CAELO&nbsp;·&nbsp;VNVS&nbsp;DOMINVS&nbsp;IN&nbsp;TERRA</div>
-  <div class="iBtn" id="iBtn" tabindex="0">INTRARE</div>
-  <div class="iFoot">CAELO&nbsp;AETERNO&nbsp;VOLENTE&nbsp;&nbsp;·&nbsp;&nbsp;MMXXIX</div>
-</div>
+<!-- 片头（TAIL ＋ INTRARE）已删：白多一次点击，第二次看只剩等待。 -->
 
 <div id="game">
   <canvas id="gTerr"></canvas>
@@ -2509,8 +2503,14 @@ function buildCards(){
    ring rotates to bring the picked one to the front (CRYPTAR1S carousel). */
 var ringR=0;
 var _clFrame=0;
+/* 相邻两张卡之间的角度。原本一律是 360/N，环上卡少的时候这个角就大得离谱：
+   N＝2 时两张卡正好背对背，玩家只看得见一张，还以为这卡只有一个开局。
+   封到 44°，开局与自定义就同框了。半径也得跟着这个角算——见 size()。 */
+function ringStep(){return Math.min(360/N,44);}
 function cardLayout(){
-  var posm=mod(pos,N),step=360/N;
+  /* 步角封顶 44°：按 360/N 摊开，N＝2 时两张卡正好背对背，玩家只看得见一张，
+     还以为这卡只有一个开局。封了顶，开局与自定义就同框了。 */
+  var posm=mod(pos,N),step=ringStep();
   _clFrame++;
   /* 先把要量的量完，再统一写样式。读 clientWidth 会强制同步重排，
      而这个循环原本是「写—读—写—读」交替 17 遍，等于一帧里逼着浏览器
@@ -2888,7 +2888,9 @@ function size(){
   var fs=Math.min(innerHeight*.52,innerWidth*.44);
   if(innerWidth<761)fs=Math.min(innerHeight*.40,innerWidth*.72);
   document.documentElement.style.setProperty('--fs',fs+'px');
-  ringR=fs*.60/Math.tan(Math.PI/N);              /* ring radius: neighbours just clear each other */
+  /* 半径按实际步角算，不按 N 算。写成 tan(π/N) 时，N＝2 得 tan(90°)＝∞，
+     半径掉到零——两张卡叠在同一点上，转过去也只是原地翻面。 */
+  ringR=fs*.60/Math.tan(ringStep()*Math.PI/360);   /* 邻卡刚好互不遮挡 */
   track.style.transform='translateZ('+ringR.toFixed(1)+'px)';   /* pull ring centre onto the camera */
   tc.width=innerWidth*DPR;tc.height=innerHeight*DPR;
   gc.width=Math.floor(innerWidth/2);gc.height=Math.floor(innerHeight/2);
@@ -2902,7 +2904,10 @@ var TITLE_CHARS=['T','A','I','L'];   /* 粉。片头与主菜单共用 */
 
 /* ================= INTRO: SPQR warp gate ================= */
 var INTRO={on:true,exiting:false,t0:performance.now()};
-var iOv=$('#intro'),iCv=$('#introCv'),ig=iCv.getContext('2d');
+/* 片头 DOM 已删。这里给它两个游离节点顶上：原来那段绘制照旧跑，只是画在
+   没有挂到文档上的画布里，谁也看不见。这样不必去改它十几处调用。 */
+var iOv=document.createElement('div'),iCv=document.createElement('canvas'),
+    ig=iCv.getContext('2d');
 var iW=0,iH=0,tp=[],tcur=[],tout=[];
 /* 圣书体标题字体：只含 𓆎𓅓𓏏𓊖 四个字形的 Noto 子集（1.4KB，OFL）。
    系统字体普遍没有圣书体——不内嵌，安卓与多数环境画出来是四个豆腐块，
@@ -3045,7 +3050,7 @@ function introExit(){
   if(INTRO.exiting)return;INTRO.exiting=true;
   iOv.style.opacity=0;
   menuEnter();                                 /* land on the main menu, not the ring */
-  setTimeout(function(){INTRO.on=false;iOv.parentNode.removeChild(iOv);},850);
+  setTimeout(function(){INTRO.on=false;try{if(iOv.parentNode)iOv.parentNode.removeChild(iOv);}catch(_){}},850);
 }
 
 /* ================= MAIN MENU: title over particle Earth ================= */
@@ -11535,8 +11540,9 @@ iOv.addEventListener('pointerup',function(e){
   if(INTRO.exiting)return;
   if(performance.now()-INTRO.t0<2900)introSkip();else introExit();
 });
-$('#iBtn').addEventListener('pointerup',function(e){e.stopPropagation();
-  if(performance.now()-INTRO.t0<2900)introSkip();else introExit();});
+/* #iBtn 随片头一起删了，这里留个空守：万一哪天片头回来，接线还在。 */
+try{var _ib=$('#iBtn');if(_ib)_ib.addEventListener('pointerup',function(e){e.stopPropagation();
+  if(performance.now()-INTRO.t0<2900)introSkip();else introExit();});}catch(_){}
 
 buildCards();
 addEventListener('resize',size);
