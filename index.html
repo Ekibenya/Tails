@@ -9379,7 +9379,7 @@ function stripCoT(t){return String(t||'').replace(/<think>[\s\S]*?<\/think>/gi,'
 function reducedMotion(){try{return matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){return false;}}
 function currentOpening(){return GAME.op||null;}
 function zjSelf(){return heroName();}
-function zjL(){return {fdT:'人物列传',rel:'关系',trust:'信任',stat:'近况',voice:'心声',file:'档案',last:'末见',prev:'◀ 前一人',next:'后一人 ▶',nd:'无　载',fr:'亲厚',ne:'平淡',ho:'疏敌',tag:'汗'};}
+function zjL(){return {fdT:'人物列传',rel:'关系',trust:'信任',stat:'近况',voice:'心声',file:'档案',last:'末见',prev:'◀ 前一人',next:'后一人 ▶',nd:'无　载',fr:'亲厚',ne:'平淡',ho:'疏敌',tag:'我'};}
 function zjAuxReady(){return (typeof subReady==='function'&&subReady())||apiReady();}
 function callAuxAI(sys,msgs){
   return new Promise(function(res,rej){
