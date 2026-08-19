@@ -3887,8 +3887,27 @@ function povMute(){
 /* 交给三维引擎用：它是另一支脚本，作用域够不到这里 */
 try{window.__ROMA_HERO__=heroName;}catch(_){}
 function heroIsCard(){try{return !(GAME.hero&&GAME.hero.n);}catch(_){return true;}}
-/* 卡里本尊的名字：文体铁则那类固定文案要靠它把「贝罗娜」替换成本局主角 */
-function cardHeroName(){return {tail:'莉赛尔'}[ACTIVE]||'莉赛尔';}
+/* 「有里子的那一位」的名字：povBind／loreHead／文体铁则都靠它拼句子。
+   原来按卡写死成一个名字，可这张卡的两个开局里有里子的不是同一个人——
+   开局零是莉赛尔，开局壹是薇丝提娜。写死的后果是开局壹每一回合都在说
+   「全篇唯一有内心的人是莉赛尔」「世界书里提到莉赛尔的条目讲的就是本局这个人，照用」，
+   于是逃奴那一套设定被正式授权套到伯爵家的小姐身上——一被揭穿就冒出「以前在所里」。
+   改成从开局正文第一句的「我是○○」认人，而且只在世界书里真有那个人物条目时才采信。
+   开局零写的是「我是逃出来的猪娘」，不是名字，认不出来就退回卡的默认值，行为不变。 */
+function cardHeroName(){
+  var DEF={tail:'莉赛尔'}[ACTIVE]||'莉赛尔';
+  try{
+    var m=String(GAME.opText||'').match(/我是([^\s，。、·・（(]{2,8})/);
+    if(m&&m[1]){
+      var nm=m[1],lb=(CARDS[ACTIVE]&&CARDS[ACTIVE].lorebook)||[];
+      for(var i=0;i<lb.length;i++){
+        var ti=String((lb[i]&&lb[i].title)||'');
+        if(ti.indexOf('【人】')===0&&ti.indexOf(nm)>=0)return nm;
+      }
+    }
+  }catch(_){}
+  return DEF;
+}
 /* 艳后线双世界判定：真=现实侧（东京），假=梦境侧（埃及）。按最近面板的时地判。 */
 function cleoAwake(){
   try{var w=(GAME.lastPanel&&GAME.lastPanel.world)||{};var td=t2s(String(w['时地']||''));
