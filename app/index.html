@@ -3896,15 +3896,43 @@ function heroIsCard(){try{return !(GAME.hero&&GAME.hero.n);}catch(_){return true
    开局零写的是「我是逃出来的猪娘」，不是名字，认不出来就退回卡的默认值，行为不变。 */
 function cardHeroName(){
   var DEF={tail:'莉赛尔'}[ACTIVE]||'莉赛尔';
+  var lb=[];try{lb=(CARDS[ACTIVE]&&CARDS[ACTIVE].lorebook)||[];}catch(_){}
+  function known(nm){
+    for(var i=0;i<lb.length;i++){
+      var ti=String((lb[i]&&lb[i].title)||'');
+      if(ti.indexOf('【人】')===0&&ti.indexOf(nm)>=0)return true;
+    }
+    return false;
+  }
+  /* ① 개국 머리글이 직접 밝혀 주면 그것이 정답이다:
+     「… ‖ 扮演·틸만（无心声） ‖ 心声·비스티나」 처럼 적으면 된다.
+     개국마다 속내를 가진 사람이 다르므로, 새 개국을 쓸 때는 이 표시를 붙여 두는 편이 확실하다. */
+  try{
+    var mk=String((GAME.op&&GAME.op.era)||'').match(/心声[·:：]\s*([^\s‖|·（(]{2,10})/);
+    if(mk&&mk[1])return mk[1];
+  }catch(_){}
+  /* ② 표시가 없으면 본문 첫머리의 「我是○○」에서 따온다.
+     세계서에 그 인물 항목이 실제로 있을 때만 인정한다. */
   try{
     var m=String(GAME.opText||'').match(/我是([^\s，。、·・（(]{2,8})/);
-    if(m&&m[1]){
-      var nm=m[1],lb=(CARDS[ACTIVE]&&CARDS[ACTIVE].lorebook)||[];
-      for(var i=0;i<lb.length;i++){
-        var ti=String((lb[i]&&lb[i].title)||'');
-        if(ti.indexOf('【人】')===0&&ti.indexOf(nm)>=0)return nm;
-      }
+    if(m&&m[1]&&known(m[1]))return m[1];
+  }catch(_){}
+  /* ③ 그것도 아니면, 본문에 이름이 나오는 인물 항목 가운데 가장 많이 불린 사람.
+     플레이어가 연기하는 사람은 제외한다 — 속내를 가진 쪽은 그가 아니다. */
+  try{
+    var body=String(GAME.opText||''),me='';
+    try{me=opHeroName();}catch(_){}
+    var best='',bn=0,seen={};
+    for(var i=0;i<lb.length;i++){
+      var ti=String((lb[i]&&lb[i].title)||'');
+      if(ti.indexOf('【人】')!==0)continue;
+      var nm=ti.slice(3).split('·')[0];
+      if(!nm||nm===me||seen[nm])continue;
+      seen[nm]=1;
+      var c=body.split(nm).length-1;
+      if(c>bn){bn=c;best=nm;}
     }
+    if(best&&bn>=2)return best;
   }catch(_){}
   return DEF;
 }
