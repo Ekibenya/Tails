@@ -434,8 +434,13 @@ html.lux::after{content:'';position:fixed;inset:0;z-index:2147483647;pointer-eve
       background:linear-gradient(0deg,rgba(6,6,6,.88) 0%,rgba(6,6,6,.66) 42%,rgba(6,6,6,0) 76%)}
 /* 三维面板是 z-index:25 的绝对定位层；放到最大档时它会压住下面这一组控件。
    把输入这一组抬到面板之上——画面可以被盖一点，控件不能点不着。 */
-#game .gLine,#game .gSugRow{pointer-events:auto}
-/* 模式行整条撤了：模式收进一枚钮＋一张单子，四选项也进了那张单子，
+#game .gLine{pointer-events:auto}
+/* 클로드의 그 흐린 글씨를 흉내 낸 것. 모드 안내문보다 한 단 더 흐리고 기울여 둔다 —
+   플레이어가 「내가 친 글자」와 헷갈리면 안 되니까. 끝의 ⇥ 는 탭으로 받는다는 표시. */
+#game #gIn.hasSug::placeholder{color:rgba(236,236,232,.30);font-style:italic;letter-spacing:.02em}
+#game #gIn.hasSug::-webkit-input-placeholder{color:rgba(236,236,232,.30);font-style:italic}
+html.lux #game #gIn.hasSug::placeholder{color:rgba(28,26,22,.30)}
+/* 模式行整条撤了：模式收进一枚钮＋一张单子，浅字提示的开关也进了那张单子，
    入梦／起床跟着钮站进输入行。原先那条横滑的 .gModes 至此没有存在的理由。 */
 #game .gm,#game .gsug{flex:none}
 /* 前缀符号单独一个 <i>：桌面留着当装饰，手机上整排要一屏放得下，藏掉它省一截。 */
@@ -503,19 +508,8 @@ html.lux::after{content:'';position:fixed;inset:0;z-index:2147483647;pointer-eve
 #game .gsug::before{content:'○\00a0';font-size:8px}
 #game .gsug.on::before{content:'●\00a0'}
 /* 四策：两列两行，点一条即照它发出去 */
-#game .gSugRow{display:none;grid-template-columns:1fr 1fr;gap:5px;padding:8px 14px 0}
-#game .gSugRow.on{display:grid}
-#game.txBig .gSugRow.on{display:none}   /* 三维放到最大时，下方空间不够，四策先让位 */
-#game .gSugRow .sg{font-size:10.5px;line-height:1.5;letter-spacing:.04em;padding:7px 11px;cursor:pointer;
-      color:var(--gold-hi);border:1px solid rgba(201,155,63,.3);background:rgba(6,6,6,.55);
-      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background .18s,border-color .18s}
-#game .gSugRow .sg:hover{background:rgba(201,155,63,.16);border-color:var(--gold)}
-#game .gSugRow .sg i{font-style:normal;color:var(--mut);font-size:8.5px;letter-spacing:.16em;margin-right:6px}
-#game .gSugRow .sg.risk{border-color:rgba(200,80,60,.55)}
-#game .gSugRow .sg.risk i{color:#c8503c}
 .zjNoBar{scrollbar-width:none}              /* 三维营造页签行：能滑但不显滚动条 */
 .zjNoBar::-webkit-scrollbar{display:none}
-#game .gSugRow .sg.wait{color:var(--mut);border-style:dashed;cursor:default;grid-column:1/-1;text-align:center}
 /* 朗读／重演／回退已挪到每段正文底下那排，输入区只留 麦克风｜输入框｜发送。
    这三个钮仍留在 DOM 里当逻辑载体——每段那排的重演/回退是转发给它们的。 */
 #game #gTts,#game #gRedo,#game #gBack{display:none}
@@ -1508,10 +1502,6 @@ html.lux #pnTx #zjScene3D>canvas,html.lux #pnTx #mdScene3D>canvas,html.lux #pnTx
 @media (max-width:760px){ .mvFoot .l{display:none} }
 
 /* —— 参谋四策：四条依次出现 —— */
-.gSugRow .sg{animation:mvRiseSm 240ms var(--e-out) backwards}
-.gSugRow .sg:nth-child(2){animation-delay:60ms}
-.gSugRow .sg:nth-child(3){animation-delay:120ms}
-.gSugRow .sg:nth-child(4){animation-delay:180ms}
 
 /* —— 可点元素：统一的状态过渡 + 按下反馈 —— */
 #game .gm,#game .gsug,#game .gAux,#game .gSend,#game .gt,
@@ -1649,7 +1639,6 @@ html.lux #pnTx #zjScene3D>canvas,html.lux #pnTx #mdScene3D>canvas,html.lux #pnTx
       <div class="gEot">·&nbsp;&nbsp;·&nbsp;&nbsp;EOT&nbsp;&nbsp;·&nbsp;&nbsp;·</div>
     </div>
     <div class="gInput">
-      <div class="gSugRow" id="gSugRow"></div>
       <div class="gLine">
         <!-- 六个模式页签横着排一排，桌面占掉整整一行，手机上还得横滑才看得全。
              改成一枚「当前模式」钮 + 一张挂在钮身上、贴着钮弹出来的单子。
@@ -1663,10 +1652,14 @@ html.lux #pnTx #zjScene3D>canvas,html.lux #pnTx #mdScene3D>canvas,html.lux #pnTx
         <span class="gm" data-tag="INSIDIAE" data-ph="私下说话 · 只有你和同伙看得见"><i class="ms">◈</i><b>聊天模式</b></span>
         <span class="gm" data-tag="EPISTVLA" data-ph="修书一封 · 收件人 @名字"><i class="ms">✉</i><b>写信</b></span>
         <span class="gm" data-tag="EDICTVM" data-ph="吩咐人去办一件事 · 说了不一定算数"><i class="ms">▣</i><b>吩咐</b></span>
-        <!-- 四选项不是输入模式，是个开关：隔一条线单列在单子最底下，开着打勾。
-             点它不收单子——开关要能看见自己刚才被打上/取消了勾。 -->
+        <!-- 浅字提示不是输入模式，是个开关：隔一条线单列在单子最底下，开着打勾。
+             点它不收单子——开关要能看见自己刚才被打上/取消了勾。
+             从前这里是「四选项」：每一幕后摆四条可点的下一步，点一条就直接发出去。
+             撤了——四条永远是满的，等于把「想写什么」变成「挑哪一条」；
+             而且点下去当场就送，连改一个字的工夫都没有。
+             改成输入框里一行浅字，Tab 收下来还能再改，不想要就直接打字盖掉。 -->
         <i class="gmSep"></i>
-            <span class="gsug on" id="gSug" title="每一幕之后，按当下局势给出四条可点选的下一步。点这里开关。"><i class="ms">✦</i><b>四选项</b><em>每一幕后给四条可点的下一步</em></span>
+            <span class="gsug on" id="gSug" title="每一幕之后，在输入框里用浅字提一句你可能想打的话。按 Tab 采纳，直接打字就盖掉。点这里开关。"><i class="ms">✦</i><b>浅字提示</b><em>输入框里提一句 · Tab 采纳</em></span>
           </span>
         </span>
         <!-- 入梦／起床只有艳后线露面（dreamSync 控），跟着模式钮站在输入行里 -->
@@ -1772,7 +1765,7 @@ html.lux #pnTx #zjScene3D>canvas,html.lux #pnTx #mdScene3D>canvas,html.lux #pnTx
       <div class="sRow"><span>MVSICA&nbsp;·&nbsp;配乐</span><input type="range" id="cfgBgm" min="0" max="100" value="55"></div>
       <div class="sRow"><span>MOTVS&nbsp;·&nbsp;动效</span><span class="sSeg" id="sgMotus"><span class="on">全开</span><span>减弱（低配）</span></span></div>
       <div class="sRow"><span>VELOCITAS&nbsp;·&nbsp;文字速度</span><span class="sSeg" id="sgVelo"><span>缓</span><span class="on">中</span><span>疾</span><span>瞬</span></span></div>
-      <div class="sRow"><span>LITTERAE&nbsp;·&nbsp;正文字体</span><span style="display:flex;gap:10px;align-items:center;flex:1;justify-content:flex-end"><input type="number" id="cfgNarr" min="12" max="30" step="1" value="17" inputmode="numeric" style="width:84px;text-align:right;background:rgba(236,236,232,.04);border:1px solid rgba(236,236,232,.25);color:var(--txt);padding:6px 8px;font-family:var(--mono);font-size:13px"><b id="cfgNarrVal" style="font-weight:400;font-size:10px;letter-spacing:.1em;color:var(--gold-hi);min-width:3.6em;text-align:right">17px</b></span></div><div class="sub">只改叙事正文那一栏的字号，单位像素，12–30，17 为默认。界面其余部分不动。</div><div class="sRow"><span>INTERFACIES&nbsp;·&nbsp;界面字体</span><span style="display:flex;gap:10px;align-items:center;flex:1;justify-content:flex-end"><input type="number" id="cfgUi" min="0" max="100" step="1" value="22" inputmode="numeric" style="width:84px;text-align:right;background:rgba(236,236,232,.04);border:1px solid rgba(236,236,232,.25);color:var(--txt);padding:6px 8px;font-family:var(--mono);font-size:13px"><b id="cfgUiVal" style="font-weight:400;font-size:10px;letter-spacing:.1em;color:var(--gold-hi);min-width:3.6em;text-align:right">22%</b></span></div><div class="sub">填 0-100 的整数整体缩放界面——情报台状态栏、顶栏、输入区与全部弹窗（含本设置与世界书）一同放大缩小；正文另有上面那一档，三维场景不受影响。0 最小、100 最大，22 为原始尺寸；输入后回车或点开生效，上下箭头可 1% 微调。</div><div class="sRow"><span>LVX&nbsp;·&nbsp;白昼模式</span><span style="flex:1;text-align:right"><input type="checkbox" id="cfgLux" style="accent-color:var(--gold);width:15px;height:15px;cursor:pointer"></span></div><div class="sub">把全站换成浅色（白昼）配色，正文黑字白底更近纸面；三维画面与配图保持原貌。主菜单右上角的&nbsp;☀/☾&nbsp;也能随时切换，两处同步。</div><div class="sRow"><span>CONSILIVM&nbsp;·&nbsp;四选项</span><span style="flex:1;text-align:right"><input type="checkbox" id="cfgSugg" checked style="accent-color:var(--gold);width:15px;height:15px;cursor:pointer"></span></div><div class="sub">开启后，每一幕落定就由参谋按当下局势拟四条可点选的下一步，点哪条便照哪条发出（并自动切到对应的输入模式）；第四条恒为冒险策。输入区上方那枚「参谋四策」也能随时开关，两处同步。未接 AI 时给的是本地拟的朴素四条。</div>
+      <div class="sRow"><span>LITTERAE&nbsp;·&nbsp;正文字体</span><span style="display:flex;gap:10px;align-items:center;flex:1;justify-content:flex-end"><input type="number" id="cfgNarr" min="12" max="30" step="1" value="17" inputmode="numeric" style="width:84px;text-align:right;background:rgba(236,236,232,.04);border:1px solid rgba(236,236,232,.25);color:var(--txt);padding:6px 8px;font-family:var(--mono);font-size:13px"><b id="cfgNarrVal" style="font-weight:400;font-size:10px;letter-spacing:.1em;color:var(--gold-hi);min-width:3.6em;text-align:right">17px</b></span></div><div class="sub">只改叙事正文那一栏的字号，单位像素，12–30，17 为默认。界面其余部分不动。</div><div class="sRow"><span>INTERFACIES&nbsp;·&nbsp;界面字体</span><span style="display:flex;gap:10px;align-items:center;flex:1;justify-content:flex-end"><input type="number" id="cfgUi" min="0" max="100" step="1" value="22" inputmode="numeric" style="width:84px;text-align:right;background:rgba(236,236,232,.04);border:1px solid rgba(236,236,232,.25);color:var(--txt);padding:6px 8px;font-family:var(--mono);font-size:13px"><b id="cfgUiVal" style="font-weight:400;font-size:10px;letter-spacing:.1em;color:var(--gold-hi);min-width:3.6em;text-align:right">22%</b></span></div><div class="sub">填 0-100 的整数整体缩放界面——情报台状态栏、顶栏、输入区与全部弹窗（含本设置与世界书）一同放大缩小；正文另有上面那一档，三维场景不受影响。0 最小、100 最大，22 为原始尺寸；输入后回车或点开生效，上下箭头可 1% 微调。</div><div class="sRow"><span>LVX&nbsp;·&nbsp;白昼模式</span><span style="flex:1;text-align:right"><input type="checkbox" id="cfgLux" style="accent-color:var(--gold);width:15px;height:15px;cursor:pointer"></span></div><div class="sub">把全站换成浅色（白昼）配色，正文黑字白底更近纸面；三维画面与配图保持原貌。主菜单右上角的&nbsp;☀/☾&nbsp;也能随时切换，两处同步。</div><div class="sRow"><span>CONSILIVM&nbsp;·&nbsp;浅字提示</span><span style="flex:1;text-align:right"><input type="checkbox" id="cfgSugg" checked style="accent-color:var(--gold);width:15px;height:15px;cursor:pointer"></span></div><div class="sub">开启后，每一幕落定就由参谋按当下局势拟四条可点选的下一步，点哪条便照哪条发出（并自动切到对应的输入模式）；第四条恒为冒险策。输入区上方那枚「参谋四策」也能随时开关，两处同步。未接 AI 时给的是本地拟的朴素四条。</div>
       <div class="sub">透明度：拖动即时生效——拉到最左＝完全透明（直接看穿到后面的动态背景）；拉到最右＝完全不透明（纯色纸底，彻底看不穿）。开低配模式时模糊被关闭。版式：自动依屏幕宽窄选择版式，也可强制使用电脑或手机布局。</div>
       <div class="sRow"><span>OBSCVRITAS&nbsp;·&nbsp;面板透明度</span><input type="range" id="cfgGlass" min="0" max="100" value="80"></div>
       <div class="sRow"><span>FORMA&nbsp;·&nbsp;版式</span><span class="sSeg" id="sgForma"><span class="on">自动</span><span>桌面</span><span>手机</span></span></div>
@@ -7155,47 +7148,50 @@ function askOracleSend(msgs){
    它是一个常开的开关：每一幕落定之后，参谋按当下局势拟四条可直接点的下一步，
    点哪条就照哪条发出去（顺带把输入模式切成那条对应的档）。第四条恒为冒险策。
    走副脑通道（没配副脑就退回主接口），不碰主生成的中断控制器。 */
-var SUGG={list:null,seq:0,busy:false};
+var SUGG={one:null,seq:0,busy:false};
 function suggOn(){return CFGS.sugg!==false;}          /* 默认开 */
 var SUGG_CODE={'话':'SERMO','動':'ACTVS','动':'ACTVS','谋':'INSIDIAE','謀':'INSIDIAE',
                '书':'EPISTVLA','書':'EPISTVLA','令':'EDICTVM','行':'ITER'};
+/* 넉 장 칩을 걷어내고 클로드식 흐린 글씨 한 줄로 바꿨다.
+   칩은 누르는 순간 그대로 보내 버려서 손볼 틈이 없었고, 넉 장이 늘 다 채워져 있어
+   「고르는 일」이 되어 버렸다. 이제는 입력칸에 흐리게 한 줄만 뜨고,
+   탭이나 오른쪽 화살표로 받아 적기만 한다 — 보내지는 않는다. 그냥 타자를 치면 사라진다. */
+function suggPh(){                      /* 지금 고른 입력 모드의 원래 안내문 */
+  try{var m=document.querySelector('#game .gm.on');
+      return m?(m.getAttribute('data-ph')||''):'';}catch(_){return '';}
+}
 function suggClear(){
-  SUGG.list=null;SUGG.seq++;
-  var r=$('#gSugRow');if(r){r.innerHTML='';r.classList.remove('on');}
+  SUGG.one=null;SUGG.seq++;
+  var i=$('#gIn');
+  if(i){i.classList.remove('hasSug');i.placeholder=suggPh();}
 }
 function suggPaint(){
-  var r=$('#gSugRow');if(!r)return;
-  if(!suggOn()||!SUGG.list||!SUGG.list.length){r.innerHTML='';r.classList.remove('on');return;}
-  r.innerHTML=SUGG.list.map(function(s,i){
-    return '<span class="sg'+(s.risk?' risk':'')+'" data-sg="'+i+'" title="'+esc2(s.text)+'">'
-      +'<i>'+esc2(s.label)+(s.risk?'!':'')+'</i>'+esc2(s.text)+'</span>';
-  }).join('');
-  r.classList.add('on');
+  var i=$('#gIn');if(!i)return;
+  if(!suggOn()||!SUGG.one||!SUGG.one.text){
+    i.classList.remove('hasSug');i.placeholder=suggPh();return;}
+  i.classList.add('hasSug');
+  i.placeholder=SUGG.one.text+'   ⇥';
 }
-function suggWait(){
-  var r=$('#gSugRow');if(!r||!suggOn())return;
-  r.innerHTML='<span class="sg wait">参谋正在拟策……</span>';r.classList.add('on');
-}
+/* 흐린 글씨는 있으면 뜨고 없으면 안 뜬다. 「생각 중」도 「실패」도 알리지 않는다 —
+   입력칸은 플레이어가 타자를 치는 자리지, 이쪽 사정을 보고하는 자리가 아니다. */
+function suggWait(){}
 /* 参谋四策一律由 AI 现拟。以前这里有一套本地规则拼的「假四策」，
    在没接口／解析失败／请求出错时顶上——玩家看不出真假，等于程序在乱出主意。
    现在不再伪造：没接口就直说，出错就给一枚「重拟」。 */
-function suggNote(txt,retry){
-  var r=$('#gSugRow');if(!r||!suggOn())return;
-  r.innerHTML='<span class="sg wait"'+(retry?' data-sgretry="1" style="cursor:pointer"':'')+'>'+esc2(txt)+'</span>';
-  r.classList.add('on');
-}
+function suggNote(){}
 /* 模型没照 JSON 格式回话时，从它自己写的那几行里宽松地捞——
    捞出来的仍是 AI 的原话，只是格式不规整，不是我们替它编的。 */
+/* 모델이 형식을 안 지켰을 때 첫 쓸 만한 한 줄만 건진다. 지어내지는 않는다. */
 function suggLoose(t){
-  var out=[];
-  String(t||'').split(/\n+/).forEach(function(ln){
+  var got='';
+  String(t||'').split(/\n+/).some(function(ln){
     ln=ln.replace(/^[\s>*\-•]+/,'').replace(/^\d+[.、)]\s*/,'').trim();
     ln=ln.replace(/^["'「『\[]+|["'」』\],]+$/g,'').trim();
-    if(!ln||ln.length>40)return;
-    if(!/[|｜]/.test(ln)&&ln.length<4)return;
-    out.push(ln);
+    if(!ln||ln.length>40)return false;
+    if(!/[|｜]/.test(ln)&&ln.length<4)return false;
+    got=ln;return true;
   });
-  return out.slice(0,4);
+  return got;
 }
 function suggGen(){
   suggClear();
@@ -7215,29 +7211,23 @@ function suggGen(){
   if(!last)return;
   var her=heroName();
   suggWait();
-  var sys='你是这一局角色扮演的参谋。根据刚落定的这一幕，替玩家（'+her+'）拟四条可以直接递出去的下一步。\n'
-    +'格式铁则：只输出一个 JSON 字符串数组，恰好四条，别的一个字都不要。\n'
-    +'每条写成「码|内容」。码只能取：话（出声说）、动（做动作）、谋（暗地里）、书（修书）、令（吩咐人办）。\n'
+  var sys='你是这一局角色扮演的旁边人。根据刚落定的这一幕，替玩家（'+her+'）想一句他这一回合可能想打的话。\n'
+    +'格式铁则：只输出一行「码|内容」，别的一个字都不要。不要 JSON，不要引号，不要序号。\n'
+    +'码只能取：话（出声说）、动（做动作）、谋（暗地里）、书（修书）、令（吩咐人办）。\n'
     +'内容不超过 14 字、第一人称、具体可执行，落到人名地名物名上，写成大白话，不抒情、不摆金句；'
-    +'不要空泛的「继续观察」「再想想」，也不要引号和序号。\n'
+    +'不要空泛的「继续观察」「再想想」。\n'
     +'这是一个笨的中世纪：不许出现精巧的机关、系统、换算，也不许在里头算账。\n'
-    +'四条要真正互斥，覆盖不同方向（试探／果断／迂回／出人意料）。\n'
-    +'第四条恒为冒险策：码后加一个「!」，允许越界、赌一把。\n'
-    +'示例：["话|问她那个铁环是谁铆的","动|把水囊塞回她手里","谋|绕开磨坊走林子边","令!|当着管事说她是我家的"]';
+    +'只给一句。给最顺手的那一句，不要给最戏剧化的那一句——这只是替他省一次打字，不是替他决定。\n'
+    +'示例：话|问她那个铁环是谁铆的';
   callAuxAI(sys,[{role:'user',content:'【刚落定的这一幕】\n'+String(last).slice(-700)}])
   .then(function(t){
     if(seq!==SUGG.seq)return;
-    var arr=null;
-    try{var mm=/\[[\s\S]*\]/.exec(String(t));arr=mm?JSON.parse(mm[0]):null;}catch(_){}
-    if(!Array.isArray(arr)||!arr.length)arr=suggLoose(t);
-    if(!arr.length){suggNote('参谋一时无策 · 点此重拟',1);return;}
-    SUGG.list=arr.slice(0,4).map(function(x){
-      var raw=String(x).replace(/^["'「『]+|["'」』]+$/g,'').trim();
-      var m=/^([^\s|｜!！]{1,2})\s*(!|！)?\s*[|｜]\s*(.+)$/.exec(raw);
-      if(!m)return {label:'话',text:raw.slice(0,30),risk:0};
-      return {label:m[1],text:String(m[3]).trim().slice(0,30),risk:m[2]?1:0};
-    }).filter(function(o){return o.text;});
-    if(!SUGG.list.length){suggNote('参谋一时无策 · 点此重拟',1);return;}
+    var raw=suggLoose(t);
+    if(!raw){SUGG.one=null;suggPaint();return;}
+    var m=/^([^\s|｜!！]{1,2})\s*(?:!|！)?\s*[|｜]\s*(.+)$/.exec(raw);
+    SUGG.one = m ? {label:m[1],text:String(m[2]).trim().slice(0,30)}
+                 : {label:'话',text:raw.slice(0,30)};
+    if(!SUGG.one.text){SUGG.one=null;}
     suggPaint();
   },function(e){if(seq===SUGG.seq)suggNote('参谋失联：'+String(e&&e.message||e||'').slice(0,24)+' · 点此重拟',1);});
 }
@@ -7388,24 +7378,29 @@ function touchy(){
     if(suggOn())suggGen();
   });
   window.__sugSync=sugSync;sugSync();
-  /* 点一条策：切到它对应的模式，填进输入框，直接发 */
-  $('#gSugRow').addEventListener('click',function(e){
-    var rt=e.target;while(rt&&rt!==this&&!rt.getAttribute('data-sgretry'))rt=rt.parentNode;
-    if(rt&&rt!==this){if(!BUSY)suggGen();return;}          /* 「点此重拟」 */
-    var el=e.target;while(el&&el!==this&&!el.getAttribute('data-sg'))el=el.parentNode;
-    if(!el||el===this)return;
-    if(BUSY)return;
-    var s=(SUGG.list||[])[parseInt(el.getAttribute('data-sg'),10)];
-    if(!s)return;
-    var want=SUGG_CODE[s.label]||'SERMO';
+  /* 흐린 글씨 받아 적기: 탭 또는 오른쪽 화살표. **보내지 않는다** —
+     예전 칩은 누르는 순간 그대로 나가 버려서 손볼 틈이 없었다. 이제는 입력칸에 옮겨 적기만 하고,
+     고치든 지우든 보내든 플레이어가 정한다. 칸에 이미 글자가 있으면 아무 일도 안 한다. */
+  gIn.addEventListener('keydown',function(e){
+    if(e.key!=='Tab'&&e.key!=='ArrowRight')return;
+    if(e.ctrlKey||e.metaKey||e.altKey||e.shiftKey)return;
+    if(gIn.value)return;                       /* 이미 친 글자가 있으면 건드리지 않는다 */
+    var one=SUGG.one;
+    if(!suggOn()||!one||!one.text||BUSY)return;
+    e.preventDefault();
+    var want=SUGG_CODE[one.label]||'SERMO';
     for(var j=0;j<gms.length;j++){
       var nm=gms[j].getAttribute('data-tag')||'';
       gms[j].classList.toggle('on',nm===want);
-      if(nm===want)gIn.placeholder=gms[j].getAttribute('data-ph')||'';
     }
-    gIn.value=s.text;
-    suggClear();
-    send();
+    var mb=$('#gModeBtn'),cur=gEl.querySelector('.gm.on');
+    if(mb&&cur){var b=mb.querySelector('b'),ic=mb.querySelector('.ms'),cb=cur.querySelector('b'),ci=cur.querySelector('.ms');
+      if(b&&cb)b.textContent=cb.textContent; if(ic&&ci)ic.textContent=ci.textContent;}
+    gIn.value=one.text;
+    SUGG.one=null;
+    gIn.classList.remove('hasSug');
+    gIn.placeholder=suggPh();
+    try{gIn.focus();gIn.setSelectionRange(gIn.value.length,gIn.value.length);}catch(_){}
   });
   /* 重新演绎：丢掉最后一条神谕回复重取 */
   $('#gRedo').addEventListener('click',function(){
